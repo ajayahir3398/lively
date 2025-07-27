@@ -1,5 +1,43 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 
+// Determine environment and set appropriate server URLs
+const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+const isProduction = process.env.NODE_ENV === 'production';
+
+const getServers = () => {
+  const servers = [];
+  
+  if (isDevelopment) {
+    servers.push({
+      url: `http://localhost:${process.env.PORT || 3000}/api`,
+      description: 'Development server'
+    });
+  }
+  
+  if (isProduction || process.env.PRODUCTION_URL) {
+    servers.push({
+      url: process.env.PRODUCTION_URL || 'https://lively-eumd.onrender.com/api',
+      description: 'Production server'
+    });
+  }
+  
+  // Fallback - show both if environment is not set
+  if (!isDevelopment && !isProduction) {
+    servers.push(
+      {
+        url: `http://localhost:${process.env.PORT || 3000}/api`,
+        description: 'Development server'
+      },
+      {
+        url: 'https://lively-eumd.onrender.com/api',
+        description: 'Production server'
+      }
+    );
+  }
+  
+  return servers;
+};
+
 const options = {
   definition: {
     openapi: '3.0.0',
@@ -16,16 +54,7 @@ const options = {
         url: 'https://opensource.org/licenses/ISC'
       }
     },
-    servers: [
-      {
-        url: 'http://localhost:3000/api',
-        description: 'Development server'
-      },
-      {
-        url: 'https://api.lively.com/api',
-        description: 'Production server'
-      }
-    ],
+    servers: getServers(),
     components: {
       securitySchemes: {
         bearerAuth: {
@@ -122,9 +151,9 @@ const options = {
       }
     ]
   },
-  apis: ['./routes/auth.routes.js', './services/auth.service.js'] // Only include auth endpoints
+  apis: ['./routes/auth.routes.js', './services/auth.service.js']
 };
 
 const specs = swaggerJsdoc(options);
 
-module.exports = specs; 
+module.exports = specs;
