@@ -121,11 +121,6 @@ module.exports = (sequelize, Sequelize) => {
     write_date: {
       type: Sequelize.DATE,
       comment: 'Last Updated on'
-    },
-    invalidated_tokens: {
-      type: Sequelize.TEXT,
-      comment: 'Invalidated JWT tokens (JSON array)',
-      defaultValue: '[]'
     }
   }, {
     tableName: 'lp_customer_login',
@@ -135,4 +130,4 @@ module.exports = (sequelize, Sequelize) => {
   });
 
   return Customer;
-}; 
+};

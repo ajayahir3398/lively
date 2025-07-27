@@ -5,7 +5,6 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger.config');
 const app = express();
 const db = require("./models");
-const { scheduleTokenCleanup } = require("./utils/tokenCleanup");
 
 // Security middleware
 app.use(helmet());
@@ -30,13 +29,6 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
 db.sequelize.sync()
   .then(() => {
     console.log("DB Synced");
-    
-    // Start scheduled token cleanup (runs every hour)
-    const cleanupInterval = scheduleTokenCleanup(60);
-    console.log("Token cleanup scheduled to run every 60 minutes");
-    
-    // Store cleanup interval for potential cleanup on app shutdown
-    app.locals.cleanupInterval = cleanupInterval;
   })
   .catch(err => console.error("DB Sync error:", err));
 

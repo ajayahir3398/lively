@@ -37,20 +37,6 @@ const verifyToken = async (req, res, next) => {
       });
     }
 
-    // Check if token has been invalidated (logout)
-    let invalidatedTokens = [];
-    try {
-      invalidatedTokens = JSON.parse(customer.invalidated_tokens || '[]');
-    } catch (error) {
-      invalidatedTokens = [];
-    }
-
-    if (invalidatedTokens.includes(cleanToken)) {
-      return res.status(401).json({ 
-        message: 'Token has been invalidated. Please login again.' 
-      });
-    }
-
     // Add user info to request object
     req.userId = decoded.id;
     req.user = decoded;
@@ -82,18 +68,8 @@ const optionalAuth = async (req, res, next) => {
       
       const customer = await Customer.findByPk(decoded.id);
       if (customer && !customer.login_disabled && customer.state !== 'blocked') {
-        // Check if token has been invalidated (logout)
-        let invalidatedTokens = [];
-        try {
-          invalidatedTokens = JSON.parse(customer.invalidated_tokens || '[]');
-        } catch (error) {
-          invalidatedTokens = [];
-        }
-
-        if (!invalidatedTokens.includes(cleanToken)) {
-          req.userId = decoded.id;
-          req.user = decoded;
-        }
+        req.userId = decoded.id;
+        req.user = decoded;
       }
     }
     next();
@@ -114,4 +90,4 @@ const authJwt = {
   isAdmin
 };
 
-module.exports = authJwt; 
+module.exports = authJwt;
