@@ -71,9 +71,6 @@ const sendOTP = async (req, res) => {
                 write_date: new Date()
             });
         }
-        console.log(new Date());
-        console.log(new Date(Date.now() + 10 * 60 * 1000));
-
         // For now, return OTP in response (in production, this should be sent via SMS)
         res.status(200).json({
             message: "OTP sent successfully!",
@@ -136,8 +133,6 @@ const verifyOTP = async (req, res) => {
 
         // Check if OTP is expired
         const expiry = moment(customer.temp_pwd_expiry + 'Z').toDate();
-        console.log(new Date());
-        console.log(expiry);
         if (new Date() > expiry) {
 
             return res.status(400).json({

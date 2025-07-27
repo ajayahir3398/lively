@@ -28,7 +28,9 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
 // Sync DB
 db.sequelize.sync()
   .then(() => {
-    console.log("DB Synced");
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("Database synced successfully.");
+    }
   })
   .catch(err => console.error("DB Sync error:", err));
 
