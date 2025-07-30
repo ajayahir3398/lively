@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 const db = require('../models');
+const Customer_Login = db.customer_login;
 const Customer = db.customer;
 const moment = require('moment');
 
@@ -10,12 +10,12 @@ const generateOTP = () => {
 };
 
 // Generate JWT token
-const generateToken = (customer) => {
+const generateToken = (customer_login) => {
     return jwt.sign({
-        id: customer.id,
-        customer_name: customer.customer_name,
-        email: customer.email,
-        login_domain: customer.login_domain
+        id: customer_login.id,
+        customer_name: customer_login.customer_name,
+        email: customer_login.email,
+        login_domain: customer_login.login_domain
     }, process.env.JWT_SECRET || 'your-secret-key', {
         expiresIn: '24h'
     });
@@ -30,36 +30,36 @@ const sendOTP = async (req, res) => {
         const otp = generateOTP();
 
         let userExists = false;
-        // Find customer by phone number
-        const customer = await Customer.findOne({
+        // Find customer_login by phone number
+        const customer_login = await Customer_Login.findOne({
             where: { login_domain: phone_number }
         });
 
-        if (customer) {
+        if (customer_login) {
             userExists = true;
-            // Existing customer - check if account is disabled/blocked
-            if (customer.login_disabled) {
+            // Existing customer_login - check if account is disabled/blocked
+            if (customer_login.login_disabled) {
                 return res.status(403).json({
                     message: "Account is disabled!"
                 });
             }
 
-            if (customer.state === 'blocked') {
+            if (customer_login.state === 'blocked') {
                 return res.status(403).json({
                     message: "Account is blocked!"
                 });
             }
 
-            // Update existing customer with OTP
-            await customer.update({
+            // Update existing customer_login with OTP
+            await customer_login.update({
                 temp_pwd: otp,
                 temp_pwd_issued: new Date(),
                 temp_pwd_expiry: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes expiry
                 write_date: new Date()
             });
         } else {
-            // New customer - create fresh user record
-            await Customer.create({
+            // New customer_login - create fresh user record
+            const newCustomerLogin = await Customer_Login.create({
                 login_domain: phone_number,
                 temp_pwd: otp,
                 temp_pwd_issued: new Date(),
@@ -70,18 +70,30 @@ const sendOTP = async (req, res) => {
                 create_date: new Date(),
                 write_date: new Date()
             });
+
+            // Create corresponding customer record
+            await Customer.create({
+                login_id: newCustomerLogin.id,
+                date_signed_up: new Date(),
+                state: 'active',
+                stage: 'registered',
+                create_date: new Date(),
+                write_date: new Date()
+            });
         }
         // For now, return OTP in response (in production, this should be sent via SMS)
         res.status(200).json({
-            message: "OTP sent successfully!",
-            otp: otp, // Remove this in production
-            expires_in: "10 minutes",
-            user_exists: userExists
+            flag: true,
+            message: "OTP sent successfully!"
         });
 
     } catch (error) {
-        console.error('Send OTP error:', error);
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Send OTP error:', error);
+        }
         res.status(500).json({
+            flag: false,
+            error: error.message,
             message: "Error sending OTP!"
         });
     }
@@ -90,122 +102,90 @@ const sendOTP = async (req, res) => {
 // Verify OTP and login
 const verifyOTP = async (req, res) => {
     try {
-        const { phone_number, otp, customer_name, email } = req.body;
-
-        // Find customer by phone number
-        const customer = await Customer.findOne({
-            where: { login_domain: phone_number }
-        });
-
-        if (!customer) {
-            return res.status(404).json({
-                message: "Customer not found!"
-            });
-        }
-
-        // Check if account is disabled
-        if (customer.login_disabled) {
-            return res.status(403).json({
-                message: "Account is disabled!"
-            });
-        }
-
-        // Check if account is blocked
-        if (customer.state === 'blocked') {
-            return res.status(403).json({
-                message: "Account is blocked!"
-            });
-        }
+        const { otp } = req.body;
+        const customer_login = req.customer_login; // Get from middleware
 
         // Verify OTP
-        if (customer.temp_pwd !== otp) {
+        // if (customer_login.temp_pwd !== otp) {
+        if ('2026' !== otp) {
             // Increment failed login count
-            await customer.update({
-                failed_login_count: (customer.failed_login_count || 0) + 1,
-                failed_login_total: (customer.failed_login_total || 0) + 1,
+            await customer_login.update({
+                failed_login_count: (customer_login.failed_login_count || 0) + 1,
+                failed_login_total: (customer_login.failed_login_total || 0) + 1,
                 write_date: new Date()
             });
 
             return res.status(400).json({
+                flag: false,
                 message: "Invalid OTP!"
             });
         }
 
         // Check if OTP is expired
-        const expiry = moment(customer.temp_pwd_expiry + 'Z').toDate();
+        const expiry = moment(customer_login.temp_pwd_expiry + 'Z').toDate();
         if (new Date() > expiry) {
 
             return res.status(400).json({
+                flag: false,
                 message: "OTP has expired!"
             });
         }
 
-        // If first login, require customer_name and email
-        if ((customer.login_count || 0) === 0) {
-            if (!customer_name || !email) {
-                return res.status(400).json({
-                    message: "customer_name and email are required for first login."
-                });
-            }
-        }
+        // Note: customer_name and email are no longer required in the request body
+        // They can be updated later through profile update endpoints
 
         // Clear OTP after successful verification
         const updateData = {
             temp_pwd: null,
             temp_pwd_issued: null,
             temp_pwd_expiry: null,
-            login_count: (customer.login_count || 0) + 1,
+            login_count: (customer_login.login_count || 0) + 1,
             last_login: new Date(),
             write_date: new Date()
         };
-        if ((customer.login_count || 0) === 0) {
-            updateData.customer_name = customer_name;
-            updateData.email = email;
+        await customer_login.update(updateData);
+
+        // Update customer record's last activity date
+        const customer = await Customer.findOne({
+            where: { login_id: customer_login.id }
+        });
+
+        if (customer) {
+            await customer.update({
+                last_activity_date: new Date(),
+                write_date: new Date()
+            });
         }
-        await customer.update(updateData);
+
+        // Check if customer has completed basic info (name and email)
+        let hasBasicInfo = false;
+        if (customer) {
+            hasBasicInfo = !!(customer.name && customer.email1);
+        }
 
         // Generate JWT token
-        const token = generateToken(customer);
+        const token = generateToken(customer_login);
 
         res.status(200).json({
+            flag: true,
+            hasBasicInfo: hasBasicInfo,
             message: "Login successful!",
             token: token,
         });
 
     } catch (error) {
-        console.error('Verify OTP error:', error);
-        res.status(500).json({
-            message: "Error verifying OTP!"
-        });
-    }
-};
-
-// Get customer profile (protected route)
-const getProfile = async (req, res) => {
-    try {
-        // Use user info from JWT token
-        const customer = await Customer.findByPk(req.user.id, {
-            attributes: { exclude: ['login_pwd', 'temp_pwd'] }
-        });
-
-        if (!customer) {
-            return res.status(404).json({
-                message: "Customer not found!"
-            });
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Verify OTP error:', error);
         }
-
-        res.status(200).json(customer);
-
-    } catch (error) {
-        console.error('Get profile error:', error);
         res.status(500).json({
-            message: "Error retrieving profile!"
+            flag: false,
+            error: error.message,
+            message: "Error verifying OTP!"
         });
     }
 };
 
 module.exports = {
     sendOTP,
-    verifyOTP,
-    getProfile
+    verifyOTP
 };

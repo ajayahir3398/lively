@@ -1,14 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const authService = require('../services/auth.service');
-const authJwt = require('../middleware/auth.middleware');
 const { 
   validateSendOTP, 
   validateVerifyOTP, 
-  validateCustomerExists,
   validateRateLimit,
   handleValidationErrors 
 } = require('../middleware/validation.middleware');
+const { validateCustomerAccountByPhone } = require('../middleware/customer.middleware');
 
 /**
  * @swagger
@@ -59,7 +58,6 @@ router.post('/send-otp',
   validateRateLimit,
   validateSendOTP, 
   handleValidationErrors,
-  validateCustomerExists,
   authService.sendOTP
 );
 
@@ -118,44 +116,10 @@ router.post('/verify-otp',
   validateRateLimit,
   validateVerifyOTP, 
   handleValidationErrors,
+  validateCustomerAccountByPhone,
   authService.verifyOTP
 );
 
-/**
- * @swagger
- * /auth/profile:
- *   get:
- *     summary: Get customer profile
- *     description: Retrieves the current customer's profile information
- *     tags: [Authentication]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Profile retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Customer'
- *       401:
- *         description: Unauthorized - invalid or missing token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       404:
- *         description: Customer not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.get('/profile', authJwt.verifyToken, authService.getProfile);
+
 
 module.exports = router;

@@ -44,7 +44,7 @@ const options = {
     info: {
       title: 'Lively Auth API',
       version: '1.0.0',
-      description: 'API for customer authentication and management with OTP-based login and secure logout functionality.',
+      description: 'API for customer authentication with OTP-based login functionality.',
       contact: {
         name: 'API Support',
         email: 'support@lively.com'
@@ -68,78 +68,99 @@ const options = {
         Error: {
           type: 'object',
           properties: {
-            message: { type: 'string', description: 'Error message' },
-            error: { type: 'string', description: 'Error details' }
+            flag: { type: 'boolean', example: false, description: 'Operation status flag' },
+            error: { type: 'string', description: 'Error details (only in catch blocks)', nullable: true },
+            message: { type: 'string', description: 'Error message' }
           }
         },
-        Message: {
-          type: 'object',
-          properties: {
-            message: { type: 'string', description: 'Success message' }
-          }
-        },
-        Customer: {
-          type: 'object',
-          properties: {
-            id: { type: 'integer', description: 'Customer ID' },
-            customer_name: { type: 'string', description: 'Customer name' },
-            email: { type: 'string', format: 'email', description: 'Customer email address' },
-            login_domain: { type: 'string', description: 'Phone number used for login' },
-            state: { type: 'string', enum: ['active', 'blocked', 'inactive'], description: 'Customer account state' },
-            initial_login: { type: 'boolean', description: 'Whether this is the first login' },
-            login_count: { type: 'integer', description: 'Number of successful logins' },
-            last_login: { type: 'string', format: 'date-time', description: 'Last login timestamp' },
-            valid_until: { type: 'string', format: 'date-time', description: 'Account validity until date' },
-            create_date: { type: 'string', format: 'date-time', description: 'Account creation date' },
-            write_date: { type: 'string', format: 'date-time', description: 'Last update date' }
-          }
-        },
+
         SendOTPRequest: {
           type: 'object',
           required: ['phone_number'],
           properties: {
-            phone_number: { type: 'string', description: 'Phone number to send OTP to', example: '+1234567890' }
+            phone_number: { type: 'string', description: 'Phone number to send OTP to', example: '1234567890' }
           }
         },
         SendOTPResponse: {
           type: 'object',
           properties: {
-            message: { type: 'string', example: 'OTP sent successfully!' },
-            otp: { type: 'string', description: 'OTP code (remove in production)', example: '1234' },
-            expires_in: { type: 'string', example: '10 minutes' },
-            user_exists: { type: 'boolean', description: 'Whether user already exists' }
+            flag: { type: 'boolean', example: true },
+            message: { type: 'string', example: 'OTP sent successfully!' }
           }
         },
         VerifyOTPRequest: {
           type: 'object',
           required: ['phone_number', 'otp'],
           properties: {
-            phone_number: { type: 'string', description: 'Phone number used for login', example: '+1234567890' },
-            otp: { type: 'string', description: 'OTP code received', example: '1234' },
-            customer_name: { type: 'string', description: 'Customer name (required for first login)', example: 'John Doe' },
-            email: { type: 'string', format: 'email', description: 'Email address (required for first login)', example: 'john@example.com' }
+            phone_number: { type: 'string', description: 'Phone number used for login', example: '1234567890' },
+            otp: { type: 'string', description: 'OTP code received', example: '2026' }
           }
         },
         LoginResponse: {
           type: 'object',
           properties: {
+            flag: { type: 'boolean', example: true },
+            hasBasicInfo: { type: 'boolean', description: 'Whether customer has completed basic info (name and email)' },
             message: { type: 'string', example: 'Login successful!' },
             token: { type: 'string', description: 'JWT token for authentication' }
           }
         },
-        LogoutResponse: {
+        AddCustomerBasicInfoRequest: {
           type: 'object',
+          required: ['name', 'email'],
           properties: {
-            message: { type: 'string', example: 'Logout successful. Token has been invalidated.' },
-            logoutTime: { type: 'string', format: 'date-time', description: 'Logout timestamp' }
+            name: { 
+              type: 'string', 
+              description: 'Customer name',
+              example: 'John Doe',
+              minLength: 2,
+              maxLength: 60
+            },
+            email: { 
+              type: 'string', 
+              format: 'email',
+              description: 'Customer email address',
+              example: 'john.doe@example.com',
+              maxLength: 40
+            }
           }
         },
-        TokenCleanupResponse: {
+        AddCustomerBasicInfoResponse: {
           type: 'object',
           properties: {
-            message: { type: 'string', example: 'Token cleanup completed successfully' },
-            totalCleaned: { type: 'integer', description: 'Number of expired tokens removed' },
-            usersProcessed: { type: 'integer', description: 'Number of users processed' }
+            flag: { type: 'boolean', example: true },
+            message: { type: 'string', example: 'Customer basic info updated successfully!' },
+            data: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer', description: 'Customer login ID' },
+                name: { type: 'string', description: 'Customer name' },
+                email: { type: 'string', description: 'Customer email' },
+                phone_number: { type: 'string', description: 'Customer phone number' }
+              }
+            }
+          }
+        },
+        GetCustomerProfileResponse: {
+          type: 'object',
+          properties: {
+            flag: { type: 'boolean', example: true },
+            message: { type: 'string', example: 'Customer profile retrieved successfully!' },
+            data: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer', description: 'Customer login ID' },
+                phone_number: { type: 'string', description: 'Customer phone number' },
+                name: { type: 'string', description: 'Customer name', nullable: true },
+                email: { type: 'string', description: 'Customer email', nullable: true },
+                state: { type: 'string', description: 'Account state' },
+                login_count: { type: 'integer', description: 'Number of times logged in' },
+                last_login: { type: 'string', format: 'date-time', description: 'Last login date', nullable: true },
+                date_signed_up: { type: 'string', format: 'date-time', description: 'Date when customer signed up', nullable: true },
+                last_activity_date: { type: 'string', format: 'date-time', description: 'Last activity date', nullable: true },
+                has_basic_info: { type: 'boolean', description: 'Whether customer has completed basic info' }
+              }
+            }
           }
         }
       }
@@ -148,10 +169,14 @@ const options = {
       {
         name: 'Authentication',
         description: 'Authentication and authorization endpoints'
+      },
+      {
+        name: 'Customer',
+        description: 'Customer management endpoints'
       }
     ]
   },
-  apis: ['./routes/auth.routes.js', './services/auth.service.js']
+  apis: ['./routes/auth.routes.js', './routes/customer.routes.js']
 };
 
 const specs = swaggerJsdoc(options);

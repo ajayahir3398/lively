@@ -12,6 +12,7 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
 // Import models
+db.customer_login = require("./customer_login.model")(sequelize, Sequelize);
 db.customer = require("./customer.model")(sequelize, Sequelize);
 
 module.exports = db;

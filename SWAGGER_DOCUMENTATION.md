@@ -166,10 +166,8 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 #### VerifyOTPRequest
 ```json
 {
-  "phone_number": "+1234567890",
-  "otp": "1234",
-  "customer_name": "John Doe",
-  "email": "john@example.com"
+  "phone_number": "1234567890",
+  "otp": "1234"
 }
 ```
 

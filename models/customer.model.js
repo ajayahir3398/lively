@@ -1,41 +1,53 @@
 module.exports = (sequelize, Sequelize) => {
-  const Customer = sequelize.define("lp_customer_login", {
+  const Customer = sequelize.define("lp_customer", {
     id: {
       type: Sequelize.INTEGER,
       primaryKey: true,
       autoIncrement: true
     },
-    login_count: {
+    login_id: {
       type: Sequelize.INTEGER,
-      comment: 'Login count'
+      comment: 'Customer login record'
     },
-    ytd_login_count: {
+    country_of_birth_id: {
       type: Sequelize.INTEGER,
-      comment: 'YTD login count'
+      comment: 'Country of birth'
     },
-    failed_login_count: {
+    nationality_id: {
       type: Sequelize.INTEGER,
-      comment: 'Failed login last count'
+      comment: 'Country of nationality'
     },
-    failed_login_total: {
+    residency_id: {
       type: Sequelize.INTEGER,
-      comment: 'Failed login total count'
+      comment: 'Country of residency'
     },
-    reset_count: {
+    national_id_type_id: {
       type: Sequelize.INTEGER,
-      comment: 'Number of times password resetted'
+      comment: 'Primary ID type'
     },
-    blocked_count: {
+    other_id_type_id: {
       type: Sequelize.INTEGER,
-      comment: 'Number of times blocked'
+      comment: 'Other ID type'
     },
-    disabled_by: {
+    race_id: {
       type: Sequelize.INTEGER,
-      comment: 'Disabled by'
+      comment: 'Race'
     },
-    enabled_by: {
+    activated_by: {
       type: Sequelize.INTEGER,
-      comment: 'Enabled by'
+      comment: 'Activated by'
+    },
+    suspended_by: {
+      type: Sequelize.INTEGER,
+      comment: 'Suspended by'
+    },
+    reason_suspended_id: {
+      type: Sequelize.INTEGER,
+      comment: 'Reason for suspension'
+    },
+    uplifted_by: {
+      type: Sequelize.INTEGER,
+      comment: 'Uplifted by'
     },
     create_uid: {
       type: Sequelize.INTEGER,
@@ -45,74 +57,113 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.INTEGER,
       comment: 'Last Updated by'
     },
-    login_domain: {
-      type: Sequelize.STRING,
-      unique: true,
-      comment: 'Login domain'
-    },
-    login_pwd: {
-      type: Sequelize.STRING,
-      comment: 'Login password'
-    },
-    customer_name: {
-      type: Sequelize.STRING,
+    name: {
+      type: Sequelize.STRING(60),
       comment: 'Customer name'
     },
-    email: {
+    code: {
+      type: Sequelize.STRING(20),
+      comment: 'Customer code'
+    },
+    email1: {
       type: Sequelize.STRING(40),
       comment: 'Primary email'
     },
-    temp_pwd: {
-      type: Sequelize.STRING,
-      comment: 'Temporary password'
+    email2: {
+      type: Sequelize.STRING(40),
+      comment: 'Alternate email'
     },
-    state: {
-      type: Sequelize.STRING,
-      comment: 'Status'
+    mobile_phone1: {
+      type: Sequelize.STRING(20),
+      comment: 'Primary mobile no'
     },
-    blocked_note: {
+    mobile_phone2: {
+      type: Sequelize.STRING(20),
+      comment: 'Alternate mobile no'
+    },
+    home_phone: {
+      type: Sequelize.STRING(20),
+      comment: 'Home phone'
+    },
+    work_phone: {
+      type: Sequelize.STRING(20),
+      comment: 'Work phone'
+    },
+    work_phone_ext: {
+      type: Sequelize.STRING,
+      comment: 'Extension'
+    },
+    main_phone: {
+      type: Sequelize.STRING,
+      comment: 'Primary phone'
+    },
+    cust_age: {
+      type: Sequelize.STRING,
+      comment: 'No. Of Years'
+    },
+    gender: {
+      type: Sequelize.STRING,
+      comment: 'Gender'
+    },
+    marital_status: {
+      type: Sequelize.STRING,
+      comment: 'Marital status'
+    },
+    national_id_no: {
+      type: Sequelize.STRING(20),
+      comment: 'Primary ID number'
+    },
+    other_id_no: {
+      type: Sequelize.STRING(20),
+      comment: 'Other ID number'
+    },
+    stage: {
+      type: Sequelize.STRING,
+      comment: 'Stage'
+    },
+    login_name: {
+      type: Sequelize.STRING(100),
+      comment: 'Login name'
+    },
+    date_of_birth: {
+      type: Sequelize.DATEONLY,
+      comment: 'Date of birth'
+    },
+    national_id_expiry: {
+      type: Sequelize.DATEONLY,
+      comment: 'Primary ID expiry'
+    },
+    other_id_expiry: {
+      type: Sequelize.DATEONLY,
+      comment: 'Other ID expiry date'
+    },
+    comments: {
       type: Sequelize.TEXT,
-      comment: 'Why blocked'
+      comment: 'Comments'
     },
-    initial_login: {
-      type: Sequelize.BOOLEAN,
-      comment: 'Initial login required'
-    },
-    login_disabled: {
-      type: Sequelize.BOOLEAN,
-      comment: 'Login disabled'
-    },
-    valid_until: {
+    date_signed_up: {
       type: Sequelize.DATE,
-      comment: 'When valid until'
+      comment: 'Date/time signed up'
     },
-    last_login: {
+    date_activated: {
       type: Sequelize.DATE,
-      comment: 'When last logged in'
+      comment: 'Date/time activated'
     },
-    temp_pwd_issued: {
+    date_suspended: {
       type: Sequelize.DATE,
-      comment: 'Temporary password date'
+      comment: 'Date/time suspended'
     },
-    temp_pwd_expiry: {
+    date_uplifted: {
       type: Sequelize.DATE,
-      comment: 'Temporary password expiry'
+      comment: 'Date/time suspension uplifted'
     },
-    reset_date: {
+    date_dormant: {
       type: Sequelize.DATE,
-      comment: 'When reset password requested'
+      comment: 'Date/time dormant'
     },
-    blocked_date: {
+    last_activity_date: {
       type: Sequelize.DATE,
-      comment: 'When last blocked'
-    },
-    disabled_date: {
-      type: Sequelize.DATE,
-      comment: 'When login disabled'
-    },
-    enabled_date: {
-      type: Sequelize.DATE,
-      comment: 'When login enabled'
+      comment: 'Last activity date'
     },
     create_date: {
       type: Sequelize.DATE,
@@ -121,13 +172,17 @@ module.exports = (sequelize, Sequelize) => {
     write_date: {
       type: Sequelize.DATE,
       comment: 'Last Updated on'
+    },
+    state: {
+      type: Sequelize.STRING,
+      comment: 'Status'
     }
   }, {
-    tableName: 'lp_customer_login',
+    tableName: 'lp_customer',
     timestamps: false,
     createdAt: 'create_date',
     updatedAt: 'write_date'
   });
 
   return Customer;
-};
+}; 

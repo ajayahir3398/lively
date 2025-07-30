@@ -74,9 +74,8 @@ npm start
 - **Response:**
   ```json
   {
-    "message": "OTP sent successfully!",
-    "otp": "1234",
-    "expires_in": "10 minutes"
+    "flag": true,
+    "message": "OTP sent successfully!"
   }
   ```
 - **Note:** Creates a fresh user if phone number doesn't exist

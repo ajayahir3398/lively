@@ -28,13 +28,18 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
 // Sync DB
 db.sequelize.sync()
   .then(() => {
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV === 'development') {
       console.log("Database synced successfully.");
     }
   })
-  .catch(err => console.error("DB Sync error:", err));
+  .catch(err => {
+    if (process.env.NODE_ENV === 'development') {
+      console.error("DB Sync error:", err);
+    }
+  });
 
 // Routes
 app.use("/api/auth", require("./routes/auth.routes"));
+app.use("/api/customer", require("./routes/customer.routes"));
 
 module.exports = app;
