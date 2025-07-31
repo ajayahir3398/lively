@@ -4,7 +4,7 @@ A Node.js Express API with OTP-based authentication for customer login using Pos
 
 ## Features
 
-- OTP-based authentication (4-digit OTP)
+- OTP-based authentication (6-digit OTP)
 - JWT token generation and verification
 - PostgreSQL database integration with Sequelize ORM
 - Security middleware (Helmet, CORS)
@@ -99,12 +99,12 @@ npm start
   ```json
   {
     "phone_number": "1234567890",
-    "otp": "1234"
+    "otp": "123456"
   }
   ```
 - **Validation:**
   - Phone number is required and must be valid
-  - OTP is required and must be exactly 4 digits
+  - OTP is required and must be exactly 6 digits
   - Rate limited to 5 requests per minute
 - **Response:**
   ```json
@@ -301,7 +301,7 @@ npm start
   ```
 
 #### 2. Update Profile (Protected)
-- **PUT** `/api/customers/profile`
+- **PUT** `/api/customers/update-profile`
 - **Headers:**
   ```
   Authorization: Bearer <jwt_token>
@@ -309,23 +309,65 @@ npm start
 - **Body:**
   ```json
   {
-    "customer_name": "John Updated",
-    "email": "john.updated@example.com"
+    "name": "John Updated",
+    "email": "john.updated@example.com",
+    "email2": "john.alternate@example.com",
+    "login_name": "johnupdated",
+    "mobile_phone1": "+1234567890",
+    "mobile_phone2": "+1987654321",
+    "home_phone": "+1555123456",
+    "work_phone": "+1555987654",
+    "work_phone_ext": "123",
+    "gender": "male",
+    "marital_status": "married",
+    "date_of_birth": "1990-01-15",
+    "national_id_no": "123456789",
+    "other_id_no": "987654321",
+    "national_id_expiry": "2030-12-31",
+    "other_id_expiry": "2025-06-30",
+    "comments": "Customer prefers SMS notifications"
   }
   ```
 - **Validation:**
-  - Customer name is optional (2-100 characters if provided)
-  - Email is optional and must be valid if provided
+  - All fields are optional
+  - Name must be 2-60 characters if provided
+  - Email addresses must be valid if provided
+  - Phone numbers must be valid if provided
+  - Gender must be male, female, or other
+  - Marital status must be single, married, divorced, widowed, or separated
+  - Dates must be in YYYY-MM-DD format
   - Rate limited to 5 requests per minute
 - **Response:**
   ```json
   {
-    "message": "Profile updated successfully!",
-    "customer": {
+    "flag": true,
+    "message": "Customer profile updated successfully!",
+    "data": {
       "id": 1,
-      "customer_name": "John Updated",
+      "phone_number": "1234567890",
+      "name": "John Updated",
       "email": "john.updated@example.com",
-      "login_domain": "1234567890"
+      "email2": "john.alternate@example.com",
+      "login_name": "johnupdated",
+      "mobile_phone1": "+1234567890",
+      "mobile_phone2": "+1987654321",
+      "home_phone": "+1555123456",
+      "work_phone": "+1555987654",
+      "work_phone_ext": "123",
+      "gender": "male",
+      "marital_status": "married",
+      "date_of_birth": "1990-01-15",
+      "national_id_no": "123456789",
+      "other_id_no": "987654321",
+      "national_id_expiry": "2030-12-31",
+      "other_id_expiry": "2025-06-30",
+      "comments": "Customer prefers SMS notifications",
+      "state": "active",
+      "login_count": 5,
+      "last_login": "2024-01-15T10:30:00.000Z",
+      "date_signed_up": "2024-01-01T00:00:00.000Z",
+      "last_activity_date": "2024-01-15T10:30:00.000Z",
+      "has_basic_info": true
     }
   }
   ```
@@ -408,7 +450,7 @@ npm start
 
 ## Authentication Flow
 
-1. **Send OTP**: Customer provides phone number, system generates 4-digit OTP
+1. **Send OTP**: Customer provides phone number, system generates 6-digit OTP
 2. **Verify OTP**: Customer provides OTP, system verifies and returns JWT token
 3. **Protected Routes**: Use JWT token in Authorization header for protected endpoints
 

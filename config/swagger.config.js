@@ -93,7 +93,7 @@ const options = {
           required: ['phone_number', 'otp'],
           properties: {
             phone_number: { type: 'string', description: 'Phone number used for login', example: '1234567890' },
-            otp: { type: 'string', description: 'OTP code received', example: '2026' }
+            otp: { type: 'string', description: 'OTP code received', example: '123456' }
           }
         },
         LoginResponse: {
@@ -141,6 +141,154 @@ const options = {
             }
           }
         },
+        UpdateCustomerProfileRequest: {
+          type: 'object',
+          properties: {
+            name: { 
+              type: 'string', 
+              description: 'Customer name',
+              example: 'John Doe',
+              minLength: 2,
+              maxLength: 60
+            },
+            email: { 
+              type: 'string', 
+              format: 'email',
+              description: 'Primary email address',
+              example: 'john.doe@example.com',
+              maxLength: 40
+            },
+            email2: { 
+              type: 'string', 
+              format: 'email',
+              description: 'Alternate email address',
+              example: 'john.alternate@example.com',
+              maxLength: 40
+            },
+            login_name: { 
+              type: 'string', 
+              description: 'Login name',
+              example: 'johndoe',
+              minLength: 2,
+              maxLength: 100
+            },
+            mobile_phone1: { 
+              type: 'string', 
+              description: 'Primary mobile phone number',
+              example: '1234567890',
+              maxLength: 20
+            },
+            mobile_phone2: { 
+              type: 'string', 
+              description: 'Alternate mobile phone number',
+              example: '1987654321',
+              maxLength: 20
+            },
+            home_phone: { 
+              type: 'string', 
+              description: 'Home phone number',
+              example: '+1555123456',
+              maxLength: 20
+            },
+            work_phone: { 
+              type: 'string', 
+              description: 'Work phone number',
+              example: '+1555987654',
+              maxLength: 20
+            },
+            work_phone_ext: { 
+              type: 'string', 
+              description: 'Work phone extension',
+              example: '123',
+              maxLength: 10
+            },
+            gender: { 
+              type: 'string', 
+              description: 'Gender',
+              example: 'male',
+              enum: ['male', 'female', 'other']
+            },
+            marital_status: { 
+              type: 'string', 
+              description: 'Marital status',
+              example: 'married',
+              enum: ['single', 'married', 'divorced', 'widowed', 'separated']
+            },
+            date_of_birth: { 
+              type: 'string', 
+              format: 'date',
+              description: 'Date of birth',
+              example: '1990-01-15'
+            },
+            national_id_no: { 
+              type: 'string', 
+              description: 'National ID number',
+              example: '123456789',
+              maxLength: 20
+            },
+            other_id_no: { 
+              type: 'string', 
+              description: 'Other ID number',
+              example: '987654321',
+              maxLength: 20
+            },
+            national_id_expiry: { 
+              type: 'string', 
+              format: 'date',
+              description: 'National ID expiry date',
+              example: '2030-12-31'
+            },
+            other_id_expiry: { 
+              type: 'string', 
+              format: 'date',
+              description: 'Other ID expiry date',
+              example: '2025-06-30'
+            },
+            comments: { 
+              type: 'string', 
+              description: 'Additional comments',
+              example: 'Customer prefers SMS notifications',
+              maxLength: 1000
+            }
+          }
+        },
+        UpdateCustomerProfileResponse: {
+          type: 'object',
+          properties: {
+            flag: { type: 'boolean', example: true },
+            message: { type: 'string', example: 'Customer profile updated successfully!' },
+            data: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer', description: 'Customer login ID' },
+                phone_number: { type: 'string', description: 'Customer phone number' },
+                name: { type: 'string', description: 'Customer name', nullable: true },
+                email: { type: 'string', description: 'Primary email', nullable: true },
+                email2: { type: 'string', description: 'Alternate email', nullable: true },
+                login_name: { type: 'string', description: 'Login name', nullable: true },
+                mobile_phone1: { type: 'string', description: 'Primary mobile phone', nullable: true },
+                mobile_phone2: { type: 'string', description: 'Alternate mobile phone', nullable: true },
+                home_phone: { type: 'string', description: 'Home phone', nullable: true },
+                work_phone: { type: 'string', description: 'Work phone', nullable: true },
+                work_phone_ext: { type: 'string', description: 'Work phone extension', nullable: true },
+                gender: { type: 'string', description: 'Gender', nullable: true },
+                marital_status: { type: 'string', description: 'Marital status', nullable: true },
+                date_of_birth: { type: 'string', format: 'date', description: 'Date of birth', nullable: true },
+                national_id_no: { type: 'string', description: 'National ID number', nullable: true },
+                other_id_no: { type: 'string', description: 'Other ID number', nullable: true },
+                national_id_expiry: { type: 'string', format: 'date', description: 'National ID expiry', nullable: true },
+                other_id_expiry: { type: 'string', format: 'date', description: 'Other ID expiry', nullable: true },
+                comments: { type: 'string', description: 'Comments', nullable: true },
+                state: { type: 'string', description: 'Account state' },
+                login_count: { type: 'integer', description: 'Number of times logged in' },
+                last_login: { type: 'string', format: 'date-time', description: 'Last login date', nullable: true },
+                date_signed_up: { type: 'string', format: 'date-time', description: 'Date when customer signed up', nullable: true },
+                last_activity_date: { type: 'string', format: 'date-time', description: 'Last activity date', nullable: true },
+                has_basic_info: { type: 'boolean', description: 'Whether customer has completed basic info' }
+              }
+            }
+          }
+        },
         GetCustomerProfileResponse: {
           type: 'object',
           properties: {
@@ -153,6 +301,7 @@ const options = {
                 phone_number: { type: 'string', description: 'Customer phone number' },
                 name: { type: 'string', description: 'Customer name', nullable: true },
                 email: { type: 'string', description: 'Customer email', nullable: true },
+                login_name: { type: 'string', description: 'Login name', nullable: true },
                 state: { type: 'string', description: 'Account state' },
                 login_count: { type: 'integer', description: 'Number of times logged in' },
                 last_login: { type: 'string', format: 'date-time', description: 'Last login date', nullable: true },

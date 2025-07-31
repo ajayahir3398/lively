@@ -3,6 +3,7 @@ const router = express.Router();
 const customerController = require('../controllers/customer.controller');
 const { 
   validateAddCustomerBasicInfo, 
+  validateUpdateCustomerProfile,
   validateRateLimit,
   handleValidationErrors 
 } = require('../middleware/validation.middleware');
@@ -129,6 +130,74 @@ router.get('/profile',
   validateCustomerAccount,
   validateRateLimit,
   customerController.getCustomerProfile
+);
+
+/**
+ * @swagger
+ * /customer/update-profile:
+ *   put:
+ *     summary: Update customer profile
+ *     description: Updates the authenticated customer's profile information with comprehensive fields
+ *     tags: [Customer]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateCustomerProfileRequest'
+ *     responses:
+ *       200:
+ *         description: Customer profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UpdateCustomerProfileResponse'
+ *       400:
+ *         description: Bad request - validation error or email already in use
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Account disabled or blocked
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Customer not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Rate limit exceeded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.put('/update-profile', 
+  verifyToken,
+  validateCustomerAccount,
+  validateRateLimit,
+  validateUpdateCustomerProfile, 
+  handleValidationErrors,
+  customerController.updateCustomerProfile
 );
 
 module.exports = router; 

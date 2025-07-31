@@ -43,7 +43,7 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 
 #### 1. Send OTP
 - **Endpoint**: `POST /api/auth/send-otp`
-- **Description**: Sends a 4-digit OTP to the provided phone number
+- **Description**: Sends a 6-digit OTP to the provided phone number
 - **Authentication**: Not required
 - **Request Body**: Phone number
 - **Response**: OTP code and expiry information
@@ -89,11 +89,11 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 - **Response**: Created customer information
 
 #### 2. Update Profile
-- **Endpoint**: `PUT /api/customers/profile`
-- **Description**: Updates customer profile information
+- **Endpoint**: `PUT /api/customers/update-profile`
+- **Description**: Updates customer profile information with comprehensive fields
 - **Authentication**: Required (Bearer token)
-- **Request Body**: Updated customer information
-- **Response**: Updated customer information
+- **Request Body**: Updated customer information (all fields optional)
+- **Response**: Updated customer information with complete profile data
 
 #### 3. Get All Customers
 - **Endpoint**: `GET /api/customers/all`
@@ -167,7 +167,7 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 ```json
 {
   "phone_number": "1234567890",
-  "otp": "1234"
+  "otp": "123456"
 }
 ```
 
@@ -180,11 +180,26 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 }
 ```
 
-#### ProfileUpdateRequest
+#### UpdateCustomerProfileRequest
 ```json
 {
-  "customer_name": "John Doe",
-  "email": "john@example.com"
+  "name": "John Doe",
+  "email": "john@example.com",
+  "email2": "john.alternate@example.com",
+  "login_name": "johndoe",
+  "mobile_phone1": "+1234567890",
+  "mobile_phone2": "+1987654321",
+  "home_phone": "+1555123456",
+  "work_phone": "+1555987654",
+  "work_phone_ext": "123",
+  "gender": "male",
+  "marital_status": "married",
+  "date_of_birth": "1990-01-15",
+  "national_id_no": "123456789",
+  "other_id_no": "987654321",
+  "national_id_expiry": "2030-12-31",
+  "other_id_expiry": "2025-06-30",
+  "comments": "Customer prefers SMS notifications"
 }
 ```
 
@@ -337,7 +352,7 @@ curl -X POST "http://localhost:3000/api/auth/send-otp" \
 # 2. Verify OTP and get token
 curl -X POST "http://localhost:3000/api/auth/verify-otp" \
   -H "Content-Type: application/json" \
-  -d '{"phone_number": "+1234567890", "otp": "1234"}'
+  -d '{"phone_number": "+1234567890", "otp": "123456"}'
 
 # 3. Use token for protected endpoints
 curl -X GET "http://localhost:3000/api/auth/profile" \

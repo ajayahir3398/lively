@@ -14,7 +14,7 @@ const { validateCustomerAccountByPhone } = require('../middleware/customer.middl
  * /auth/send-otp:
  *   post:
  *     summary: Send OTP for login
- *     description: Sends a 4-digit OTP to the provided phone number for authentication
+ *     description: Sends a 6-digit OTP to the provided phone number for authentication
  *     tags: [Authentication]
  *     requestBody:
  *       required: true

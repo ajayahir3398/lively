@@ -10,7 +10,13 @@ const getCustomerProfile = async (req, res) => {
     return await customerService.getCustomerProfile(req, res);
 };
 
+// Update customer profile controller
+const updateCustomerProfile = async (req, res) => {
+    return await customerService.updateCustomerProfile(req, res);
+};
+
 module.exports = {
     addCustomerBasicInfo,
-    getCustomerProfile
+    getCustomerProfile,
+    updateCustomerProfile
 }; 

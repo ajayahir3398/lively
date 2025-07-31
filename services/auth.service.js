@@ -4,9 +4,9 @@ const Customer_Login = db.customer_login;
 const Customer = db.customer;
 const moment = require('moment');
 
-// Generate 4-digit OTP
+// Generate 6-digit OTP
 const generateOTP = () => {
-    return Math.floor(1000 + Math.random() * 9000).toString();
+    return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
 // Generate JWT token
@@ -107,7 +107,7 @@ const verifyOTP = async (req, res) => {
 
         // Verify OTP
         // if (customer_login.temp_pwd !== otp) {
-        if ('2026' !== otp) {
+        if ('123456' !== otp) {
             // Increment failed login count
             await customer_login.update({
                 failed_login_count: (customer_login.failed_login_count || 0) + 1,
