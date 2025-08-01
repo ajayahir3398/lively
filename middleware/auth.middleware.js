@@ -2,6 +2,9 @@ const jwt = require('jsonwebtoken');
 const db = require('../models');
 const Customer_Login = db.customer_login;
 
+// Token blacklist manager
+const tokenBlacklistManager = require('../utils/tokenBlacklistManager');
+
 const verifyToken = async (req, res, next) => {
   const token = req.headers['x-access-token'] || req.headers['authorization'];
 
@@ -15,6 +18,14 @@ const verifyToken = async (req, res, next) => {
   try {
     const cleanToken = token.replace('Bearer ', '');
     const decoded = jwt.verify(cleanToken, process.env.JWT_SECRET || 'your-secret-key');
+    
+    // Check if token is blacklisted
+    if (tokenBlacklistManager.isBlacklisted(cleanToken)) {
+      return res.status(401).json({ 
+        flag: false,
+        message: 'Token has been invalidated' 
+      });
+    }
     
     // Get user from database
     const customer_login = await Customer_Login.findByPk(decoded.id);
@@ -95,7 +106,8 @@ const isAdmin = (req, res, next) => {
 const authJwt = {
   verifyToken,
   optionalAuth,
-  isAdmin
+  isAdmin,
+  tokenBlacklistManager
 };
 
 module.exports = authJwt;

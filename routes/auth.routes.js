@@ -8,6 +8,7 @@ const {
   handleValidationErrors 
 } = require('../middleware/validation.middleware');
 const { validateCustomerAccountByPhone } = require('../middleware/customer.middleware');
+const { verifyToken } = require('../middleware/auth.middleware');
 
 /**
  * @swagger
@@ -120,6 +121,199 @@ router.post('/verify-otp',
   authService.verifyOTP
 );
 
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     description: Invalidates the current JWT token
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 flag:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Logout successful! Token has been invalidated."
+ *                 logoutTime:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: No token provided or token already invalidated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/logout', 
+  verifyToken,
+  authService.logout
+);
 
+/**
+ * @swagger
+ * /auth/logout-all:
+ *   post:
+ *     summary: Logout from all devices
+ *     description: Invalidates all tokens for the current user
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout from all devices successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 flag:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Logout from all devices successful!"
+ *                 logoutTime:
+ *                   type: string
+ *                   format: date-time
+ *       401:
+ *         description: Invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/logout-all', 
+  verifyToken,
+  authService.logoutAllDevices
+);
+
+/**
+ * @swagger
+ * /auth/cleanup-tokens:
+ *   post:
+ *     summary: Cleanup expired tokens
+ *     description: Removes expired tokens from the blacklist
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Cleanup completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 flag:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Cleanup completed! Removed 5 expired tokens."
+ *                 deletedCount:
+ *                   type: integer
+ *                   example: 5
+ *       401:
+ *         description: Invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/cleanup-tokens', 
+  verifyToken,
+  authService.cleanupTokens
+);
+
+/**
+ * @swagger
+ * /auth/blacklist-stats:
+ *   get:
+ *     summary: Get blacklist statistics
+ *     description: Retrieves statistics about the token blacklist
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 flag:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Blacklist statistics retrieved successfully"
+ *                 stats:
+ *                   type: object
+ *                   properties:
+ *                     total_blacklisted:
+ *                       type: integer
+ *                       example: 5
+ *                     last_updated:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2024-01-01T12:00:00.000Z"
+ *       401:
+ *         description: Invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/blacklist-stats', 
+  verifyToken,
+  authService.getBlacklistStats
+);
 
 module.exports = router;

@@ -265,7 +265,7 @@ The API uses JWT (JSON Web Tokens) for authentication. To access protected endpo
    ```
    Authorization: Bearer <your-jwt-token>
    ```
-3. **Token Expiry**: Tokens expire after 24 hours
+3. **Token Expiry**: Tokens expire after 30 days
 4. **Logout**: Use logout endpoints to invalidate tokens
 
 ### Token Management

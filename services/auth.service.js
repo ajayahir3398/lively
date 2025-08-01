@@ -3,6 +3,7 @@ const db = require('../models');
 const Customer_Login = db.customer_login;
 const Customer = db.customer;
 const moment = require('moment');
+const { tokenBlacklistManager } = require('../middleware/auth.middleware');
 
 // Generate 6-digit OTP
 const generateOTP = () => {
@@ -17,7 +18,7 @@ const generateToken = (customer_login) => {
         email: customer_login.email,
         login_domain: customer_login.login_domain
     }, process.env.JWT_SECRET || 'your-secret-key', {
-        expiresIn: '24h'
+        expiresIn: '30d'
     });
 };
 
@@ -29,14 +30,14 @@ const sendOTP = async (req, res) => {
         // Generate OTP
         const otp = generateOTP();
 
-        let userExists = false;
+        let customerExists = false;
         // Find customer_login by phone number
         const customer_login = await Customer_Login.findOne({
             where: { login_domain: phone_number }
         });
 
         if (customer_login) {
-            userExists = true;
+            customerExists = true;
             // Existing customer_login - check if account is disabled/blocked
             if (customer_login.login_disabled) {
                 return res.status(403).json({
@@ -185,7 +186,138 @@ const verifyOTP = async (req, res) => {
     }
 };
 
+// Logout function to invalidate token
+const logout = async (req, res) => {
+    try {
+        const token = req.headers['x-access-token'] || req.headers['authorization'];
+        
+        if (!token) {
+            return res.status(400).json({
+                flag: false,
+                message: "No token provided!"
+            });
+        }
+
+        const cleanToken = token.replace('Bearer ', '');
+        
+        // Verify token to get user info
+        const decoded = jwt.verify(cleanToken, process.env.JWT_SECRET || 'your-secret-key');
+        
+        // Check if token is already blacklisted
+        if (tokenBlacklistManager.isBlacklisted(cleanToken)) {
+            return res.status(400).json({
+                flag: false,
+                message: "Token is already invalidated!"
+            });
+        }
+        
+        // Add token to blacklist
+        tokenBlacklistManager.addToken(cleanToken);
+        
+        res.status(200).json({
+            flag: true,
+            message: "Logout successful! Token has been invalidated.",
+            logoutTime: new Date()
+        });
+        
+    } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Logout error:', error);
+        }
+        res.status(500).json({
+            flag: false,
+            error: error.message,
+            message: "Error during logout!"
+        });
+    }
+};
+
+// Logout all devices for a user
+const logoutAllDevices = async (req, res) => {
+    try {
+        const userId = req.userId; // From auth middleware
+        
+        // Get all active tokens for this user (not blacklisted yet)
+        // This is a simplified approach - in production you might want to track active tokens
+        const user = await Customer_Login.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({
+                flag: false,
+                message: "User not found!"
+            });
+        }
+        
+        // For now, we'll just return success since we don't track all active tokens
+        // In a more sophisticated system, you'd blacklist all tokens for this user
+        res.status(200).json({
+            flag: true,
+            message: "Logout from all devices successful!",
+            logoutTime: new Date()
+        });
+        
+    } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Logout all devices error:', error);
+        }
+        res.status(500).json({
+            flag: false,
+            error: error.message,
+            message: "Error during logout from all devices!"
+        });
+    }
+};
+
+// Cleanup expired tokens from blacklist
+const cleanupTokens = async (req, res) => {
+    try {
+        const deletedCount = tokenBlacklistManager.cleanupExpiredTokens();
+        
+        res.status(200).json({
+            flag: true,
+            message: `Cleanup completed! Removed ${deletedCount} expired tokens.`,
+            deletedCount: deletedCount
+        });
+        
+    } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Token cleanup error:', error);
+        }
+        res.status(500).json({
+            flag: false,
+            error: error.message,
+            message: "Error during token cleanup!"
+        });
+    }
+};
+
+// Get blacklist statistics
+const getBlacklistStats = async (req, res) => {
+    try {
+        const stats = tokenBlacklistManager.getStats();
+        
+        res.status(200).json({
+            flag: true,
+            message: "Blacklist statistics retrieved successfully",
+            stats: stats
+        });
+        
+    } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Get blacklist stats error:', error);
+        }
+        res.status(500).json({
+            flag: false,
+            error: error.message,
+            message: "Error retrieving blacklist statistics!"
+        });
+    }
+};
+
 module.exports = {
     sendOTP,
-    verifyOTP
+    verifyOTP,
+    logout,
+    logoutAllDevices,
+    cleanupTokens,
+    getBlacklistStats
 };

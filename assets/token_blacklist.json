@@ -1,0 +1,11 @@
+{
+  "blacklisted_tokens": [
+    {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiY3VzdG9tZXJfbmFtZSI6IkpvaG4gZ29vb29vIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImxvZ2luX2RvbWFpbiI6IjEyMzQ1Njc4OTAiLCJpYXQiOjE3NTQwODE3MTIsImV4cCI6MTc1NDE2ODExMn0.XjRCcTgIrEC02SxEF_9qqEx72tMkx5a117DI5N3JZ6o",
+      "timestamp": 1754081707093
+    }
+  ],
+  "last_updated": "2025-08-01T20:57:07.093Z",
+  "total_blacklisted": 1,
+  "max_size": 100
+}
