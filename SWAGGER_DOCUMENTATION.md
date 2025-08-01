@@ -59,7 +59,7 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 - **Endpoint**: `GET /api/auth/profile`
 - **Description**: Retrieves current user's profile
 - **Authentication**: Required (Bearer token)
-- **Response**: User profile information
+- **Response**: User profile information including date_of_birth
 
 #### 4. Logout
 - **Endpoint**: `POST /api/auth/logout`
@@ -227,8 +227,8 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
   "login_count": 5,
   "last_login": "2024-01-01T12:00:00.000Z",
   "valid_until": "2024-12-31T23:59:59.000Z",
-  "create_date": "2024-01-01T00:00:00.000Z",
-  "write_date": "2024-01-01T12:00:00.000Z"
+  "write_date": "2024-01-01T12:00:00.000Z",
+  "date_of_birth": "1990-01-15"
 }
 ```
 

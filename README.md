@@ -131,19 +131,34 @@ npm start
 - **Response:**
   ```json
   {
-    "customer": {
+    "flag": true,
+    "message": "Customer profile retrieved successfully!",
+    "data": {
       "id": 1,
-      "customer_name": "John Doe",
+      "phone_number": "1234567890",
+      "name": "John Doe",
       "email": "john@example.com",
-      "login_domain": "1234567890",
-      "login_count": 5,
-      "last_login": "2024-01-15T10:30:00.000Z"
-    },
-    "user": {
-      "id": 1,
-      "customer_name": "John Doe",
-      "email": "john@example.com",
-      "login_domain": "1234567890"
+             "login_name": "johndoe",
+       "email2": "john.alternate@example.com",
+       "mobile_phone1": "+1234567890",
+       "mobile_phone2": "+1987654321",
+       "home_phone": "+1555123456",
+       "work_phone": "+1555987654",
+       "work_phone_ext": "123",
+       "gender": "male",
+       "marital_status": "married",
+       "date_of_birth": "1990-01-15",
+       "national_id_no": "123456789",
+       "other_id_no": "987654321",
+       "national_id_expiry": "2030-12-31",
+       "other_id_expiry": "2025-06-30",
+       "comments": "Customer prefers SMS notifications",
+       "state": "active",
+       "login_count": 5,
+       "last_login": "2024-01-15T10:30:00.000Z",
+       "date_signed_up": "2024-01-01T00:00:00.000Z",
+       "last_activity_date": "2024-01-15T10:30:00.000Z",
+       "has_basic_info": true
     }
   }
   ```
