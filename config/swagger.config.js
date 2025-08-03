@@ -16,7 +16,7 @@ const getServers = () => {
   
   if (isProduction || process.env.PRODUCTION_URL) {
     servers.push({
-      url: process.env.PRODUCTION_URL || 'https://lively-eumd.onrender.com/api',
+      url: process.env.PRODUCTION_URL || 'https://lively-c70a.onrender.com/api',
       description: 'Production server'
     });
   }
@@ -29,7 +29,7 @@ const getServers = () => {
         description: 'Development server'
       },
       {
-        url: 'https://lively-eumd.onrender.com/api',
+        url: 'https://lively-c70a.onrender.com/api',
         description: 'Production server'
       }
     );
