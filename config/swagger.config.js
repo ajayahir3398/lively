@@ -21,8 +21,16 @@ const getServers = () => {
     });
   }
   
+  // Always include production server for deployed version
+  if (process.env.NODE_ENV === 'production' || !process.env.NODE_ENV) {
+    servers.push({
+      url: 'https://lively-c70a.onrender.com/api',
+      description: 'Production server'
+    });
+  }
+  
   // Fallback - show both if environment is not set
-  if (!isDevelopment && !isProduction) {
+  if (!isDevelopment && !isProduction && !servers.length) {
     servers.push(
       {
         url: `http://localhost:${process.env.PORT || 3000}/api`,
