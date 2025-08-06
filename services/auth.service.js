@@ -123,7 +123,8 @@ const verifyOTP = async (req, res) => {
         }
 
         // Check if OTP is expired
-        const expiry = moment(customer_login.temp_pwd_expiry + 'Z').toDate();
+        const expirytime = new Date(customer_login.temp_pwd_expiry);
+        const expiry = new Date(expirytime.getTime() + (330 * 60 * 1000));
         if (new Date() > expiry) {
 
             return res.status(400).json({
@@ -190,7 +191,7 @@ const verifyOTP = async (req, res) => {
 const logout = async (req, res) => {
     try {
         const token = req.headers['x-access-token'] || req.headers['authorization'];
-        
+
         if (!token) {
             return res.status(400).json({
                 flag: false,
@@ -199,10 +200,10 @@ const logout = async (req, res) => {
         }
 
         const cleanToken = token.replace('Bearer ', '');
-        
+
         // Verify token to get user info
         const decoded = jwt.verify(cleanToken, process.env.JWT_SECRET || 'your-secret-key');
-        
+
         // Check if token is already blacklisted
         if (tokenBlacklistManager.isBlacklisted(cleanToken)) {
             return res.status(400).json({
@@ -210,16 +211,16 @@ const logout = async (req, res) => {
                 message: "Token is already invalidated!"
             });
         }
-        
+
         // Add token to blacklist
         tokenBlacklistManager.addToken(cleanToken);
-        
+
         res.status(200).json({
             flag: true,
             message: "Logout successful! Token has been invalidated.",
             logoutTime: new Date()
         });
-        
+
     } catch (error) {
         if (process.env.NODE_ENV === 'development') {
             console.error('Logout error:', error);
@@ -236,7 +237,7 @@ const logout = async (req, res) => {
 const logoutAllDevices = async (req, res) => {
     try {
         const userId = req.userId; // From auth middleware
-        
+
         // Get all active tokens for this user (not blacklisted yet)
         // This is a simplified approach - in production you might want to track active tokens
         const user = await Customer_Login.findByPk(userId);
@@ -246,7 +247,7 @@ const logoutAllDevices = async (req, res) => {
                 message: "User not found!"
             });
         }
-        
+
         // For now, we'll just return success since we don't track all active tokens
         // In a more sophisticated system, you'd blacklist all tokens for this user
         res.status(200).json({
@@ -254,7 +255,7 @@ const logoutAllDevices = async (req, res) => {
             message: "Logout from all devices successful!",
             logoutTime: new Date()
         });
-        
+
     } catch (error) {
         if (process.env.NODE_ENV === 'development') {
             console.error('Logout all devices error:', error);
@@ -271,13 +272,13 @@ const logoutAllDevices = async (req, res) => {
 const cleanupTokens = async (req, res) => {
     try {
         const deletedCount = tokenBlacklistManager.cleanupExpiredTokens();
-        
+
         res.status(200).json({
             flag: true,
             message: `Cleanup completed! Removed ${deletedCount} expired tokens.`,
             deletedCount: deletedCount
         });
-        
+
     } catch (error) {
         if (process.env.NODE_ENV === 'development') {
             console.error('Token cleanup error:', error);
@@ -294,13 +295,13 @@ const cleanupTokens = async (req, res) => {
 const getBlacklistStats = async (req, res) => {
     try {
         const stats = tokenBlacklistManager.getStats();
-        
+
         res.status(200).json({
             flag: true,
             message: "Blacklist statistics retrieved successfully",
             stats: stats
         });
-        
+
     } catch (error) {
         if (process.env.NODE_ENV === 'development') {
             console.error('Get blacklist stats error:', error);
