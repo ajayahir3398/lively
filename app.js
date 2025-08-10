@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
+const cookieParser = require("cookie-parser");
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger.config');
 const app = express();
@@ -51,7 +52,7 @@ const corsOptions = {
       callback(null, true);
     }
   },
-  credentials: false, // Set to false for mobile apps - they don't need cookies
+  credentials: true, // Enable credentials for refresh token cookies
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
     'Content-Type', 
@@ -73,6 +74,9 @@ app.use(cors(corsOptions));
 
 // Handle preflight requests
 app.options('*', cors(corsOptions));
+
+// Cookie parsing middleware
+app.use(cookieParser());
 
 // Body parsing middleware with larger limits for mobile uploads
 app.use(express.json({ limit: '10mb' }));

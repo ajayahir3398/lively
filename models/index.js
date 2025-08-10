@@ -14,5 +14,7 @@ db.sequelize = sequelize;
 // Import models
 db.customer_login = require("./customer_login.model")(sequelize, Sequelize);
 db.customer = require("./customer.model")(sequelize, Sequelize);
+db.session_logs = require("./lp_session_logs.model")(sequelize, Sequelize);
+db.token_blacklist = require("./lp_token_blacklist.model")(sequelize, Sequelize);
 
 module.exports = db;

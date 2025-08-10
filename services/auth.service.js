@@ -2,24 +2,48 @@ const jwt = require('jsonwebtoken');
 const db = require('../models');
 const Customer_Login = db.customer_login;
 const Customer = db.customer;
+const SessionLogs = db.session_logs;
+const TokenBlacklist = db.token_blacklist;
 const moment = require('moment');
-const { tokenBlacklistManager } = require('../middleware/auth.middleware');
+const {
+    generateAccessToken,
+    generateRefreshToken,
+    verifyRefreshToken,
+    getTokenExpiry,
+    getTokenJTI,
+    generateDeviceInfo,
+    getRefreshTokenCookieOptions
+} = require('../utils/tokenUtils');
 
 // Generate 6-digit OTP
 const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Generate JWT token
-const generateToken = (customer_login) => {
-    return jwt.sign({
-        id: customer_login.id,
-        customer_name: customer_login.customer_name,
-        email: customer_login.email,
-        login_domain: customer_login.login_domain
-    }, process.env.JWT_SECRET || 'your-secret-key', {
-        expiresIn: '30d'
+// Generate both access and refresh tokens
+const generateTokens = async (customer_login, req) => {
+    const accessToken = generateAccessToken(customer_login);
+    const refreshToken = generateRefreshToken(customer_login);
+    
+    // Get device information
+    const deviceInfo = generateDeviceInfo(req);
+    
+    // Save refresh token in session_logs
+    const refreshTokenExpiry = getTokenExpiry(refreshToken);
+    await SessionLogs.create({
+        user_id: customer_login.id,
+        refresh_token: refreshToken,
+        refresh_token_expires_at: refreshTokenExpiry,
+        is_active: true,
+        device_info: deviceInfo.device_info,
+        ip_address: deviceInfo.ip_address,
+        user_agent: deviceInfo.user_agent,
+        last_used_at: new Date(),
+        create_date: new Date(),
+        write_date: new Date()
     });
+    
+    return { accessToken, refreshToken };
 };
 
 // Send OTP for login
@@ -165,14 +189,17 @@ const verifyOTP = async (req, res) => {
             hasBasicInfo = !!(customer.name && customer.email1);
         }
 
-        // Generate JWT token
-        const token = generateToken(customer_login);
+        // Generate access and refresh tokens
+        const { accessToken, refreshToken } = await generateTokens(customer_login, req);
+        
+        // Set refresh token as HttpOnly cookie
+        res.cookie('refreshToken', refreshToken, getRefreshTokenCookieOptions());
 
         res.status(200).json({
             flag: true,
             hasBasicInfo: hasBasicInfo,
             message: "Login successful!",
-            token: token,
+            accessToken: accessToken,
         });
 
     } catch (error) {
@@ -187,37 +214,89 @@ const verifyOTP = async (req, res) => {
     }
 };
 
-// Logout function to invalidate token
+// Logout function to invalidate tokens
 const logout = async (req, res) => {
     try {
-        const token = req.headers['x-access-token'] || req.headers['authorization'];
+        const accessToken = req.headers['x-access-token'] || req.headers['authorization'];
+        const refreshToken = req.cookies.refreshToken;
 
-        if (!token) {
+        if (!accessToken && !refreshToken) {
             return res.status(400).json({
                 flag: false,
-                message: "No token provided!"
+                message: "No tokens provided!"
             });
         }
 
-        const cleanToken = token.replace('Bearer ', '');
-
-        // Verify token to get user info
-        const decoded = jwt.verify(cleanToken, process.env.JWT_SECRET || 'your-secret-key');
-
-        // Check if token is already blacklisted
-        if (tokenBlacklistManager.isBlacklisted(cleanToken)) {
-            return res.status(400).json({
-                flag: false,
-                message: "Token is already invalidated!"
-            });
+        let userId = null;
+        
+        // Handle access token if present
+        if (accessToken) {
+            const cleanAccessToken = accessToken.replace('Bearer ', '');
+            
+            try {
+                const decoded = jwt.verify(cleanAccessToken, process.env.JWT_SECRET || 'your-secret-key');
+                userId = decoded.id;
+                
+                // Get access token JTI for blacklisting
+                const jti = getTokenJTI(cleanAccessToken);
+                const tokenExpiry = getTokenExpiry(cleanAccessToken);
+                
+                if (jti && tokenExpiry) {
+                    // Add access token to database blacklist
+                    await TokenBlacklist.create({
+                        token: jti, // Store JTI instead of full token
+                        user_id: userId,
+                        expires_at: tokenExpiry,
+                        blacklisted_at: new Date(),
+                        reason: 'logout',
+                        create_date: new Date(),
+                        write_date: new Date()
+                    });
+                }
+            } catch (tokenError) {
+                // Token might be expired or invalid, continue with logout
+                console.log('Access token validation failed during logout:', tokenError.message);
+            }
         }
-
-        // Add token to blacklist
-        tokenBlacklistManager.addToken(cleanToken);
+        
+        // Handle refresh token if present
+        if (refreshToken) {
+            try {
+                const decoded = verifyRefreshToken(refreshToken);
+                userId = userId || decoded.id;
+                
+                // Mark session as inactive in session_logs
+                await SessionLogs.update(
+                    {
+                        is_active: false,
+                        revoked_at: new Date(),
+                        revoked_reason: 'logout',
+                        write_date: new Date()
+                    },
+                    {
+                        where: {
+                            refresh_token: refreshToken,
+                            user_id: userId,
+                            is_active: true
+                        }
+                    }
+                );
+            } catch (tokenError) {
+                console.log('Refresh token validation failed during logout:', tokenError.message);
+            }
+        }
+        
+        // Clear refresh token cookie
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+            path: '/'
+        });
 
         res.status(200).json({
             flag: true,
-            message: "Logout successful! Token has been invalidated.",
+            message: "Logout successful! Tokens have been invalidated.",
             logoutTime: new Date()
         });
 
@@ -238,8 +317,7 @@ const logoutAllDevices = async (req, res) => {
     try {
         const userId = req.userId; // From auth middleware
 
-        // Get all active tokens for this user (not blacklisted yet)
-        // This is a simplified approach - in production you might want to track active tokens
+        // Get user
         const user = await Customer_Login.findByPk(userId);
         if (!user) {
             return res.status(404).json({
@@ -248,8 +326,30 @@ const logoutAllDevices = async (req, res) => {
             });
         }
 
-        // For now, we'll just return success since we don't track all active tokens
-        // In a more sophisticated system, you'd blacklist all tokens for this user
+        // Mark all active sessions as inactive
+        await SessionLogs.update(
+            {
+                is_active: false,
+                revoked_at: new Date(),
+                revoked_reason: 'logout_all_devices',
+                write_date: new Date()
+            },
+            {
+                where: {
+                    user_id: userId,
+                    is_active: true
+                }
+            }
+        );
+        
+        // Clear refresh token cookie from current device
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+            path: '/'
+        });
+
         res.status(200).json({
             flag: true,
             message: "Logout from all devices successful!",
@@ -268,15 +368,162 @@ const logoutAllDevices = async (req, res) => {
     }
 };
 
-// Cleanup expired tokens from blacklist
+// Refresh access token using refresh token
+const refreshToken = async (req, res) => {
+    try {
+        const refreshToken = req.cookies.refreshToken;
+        
+        if (!refreshToken) {
+            return res.status(401).json({
+                flag: false,
+                message: "Refresh token not found!"
+            });
+        }
+        
+        // Verify refresh token
+        let decoded;
+        try {
+            decoded = verifyRefreshToken(refreshToken);
+        } catch (error) {
+            // Clear invalid refresh token cookie
+            res.clearCookie('refreshToken', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+                path: '/'
+            });
+            
+            return res.status(401).json({
+                flag: false,
+                message: "Invalid or expired refresh token!"
+            });
+        }
+        
+        // Check if refresh token exists in active sessions
+        const session = await SessionLogs.findOne({
+            where: {
+                refresh_token: refreshToken,
+                user_id: decoded.id,
+                is_active: true
+            }
+        });
+        
+        if (!session) {
+            // Clear invalid refresh token cookie
+            res.clearCookie('refreshToken', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+                path: '/'
+            });
+            
+            return res.status(401).json({
+                flag: false,
+                message: "Refresh token session not found or inactive!"
+            });
+        }
+        
+        // Get customer login details
+        const customer_login = await Customer_Login.findByPk(decoded.id);
+        if (!customer_login) {
+            return res.status(401).json({
+                flag: false,
+                message: "User not found!"
+            });
+        }
+        
+        // Check if account is disabled or blocked
+        if (customer_login.login_disabled) {
+            return res.status(403).json({
+                flag: false,
+                message: "Account is disabled!"
+            });
+        }
+        
+        if (customer_login.state === 'blocked') {
+            return res.status(403).json({
+                flag: false,
+                message: "Account is blocked!"
+            });
+        }
+        
+        // Generate new access token
+        const newAccessToken = generateAccessToken(customer_login);
+        
+        // Optionally rotate refresh token (recommended for security)
+        const shouldRotateRefreshToken = true;
+        let newRefreshToken = refreshToken;
+        
+        if (shouldRotateRefreshToken) {
+            // Generate new refresh token
+            newRefreshToken = generateRefreshToken(customer_login);
+            const newRefreshTokenExpiry = getTokenExpiry(newRefreshToken);
+            
+            // Update session with new refresh token
+            await session.update({
+                refresh_token: newRefreshToken,
+                refresh_token_expires_at: newRefreshTokenExpiry,
+                last_used_at: new Date(),
+                write_date: new Date()
+            });
+            
+            // Set new refresh token cookie
+            res.cookie('refreshToken', newRefreshToken, getRefreshTokenCookieOptions());
+        } else {
+            // Just update last used time
+            await session.update({
+                last_used_at: new Date(),
+                write_date: new Date()
+            });
+        }
+        
+        res.status(200).json({
+            flag: true,
+            message: "Token refreshed successfully!",
+            accessToken: newAccessToken
+        });
+        
+    } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Refresh token error:', error);
+        }
+        res.status(500).json({
+            flag: false,
+            error: error.message,
+            message: "Error refreshing token!"
+        });
+    }
+};
+
+// Cleanup expired tokens from blacklist and sessions
 const cleanupTokens = async (req, res) => {
     try {
-        const deletedCount = tokenBlacklistManager.cleanupExpiredTokens();
+        // Cleanup database blacklist
+        const dbBlacklistDeleted = await TokenBlacklist.destroy({
+            where: {
+                expires_at: {
+                    [db.Sequelize.Op.lt]: new Date()
+                }
+            }
+        });
+        
+        // Cleanup expired sessions
+        const sessionsDeleted = await SessionLogs.destroy({
+            where: {
+                refresh_token_expires_at: {
+                    [db.Sequelize.Op.lt]: new Date()
+                }
+            }
+        });
 
         res.status(200).json({
             flag: true,
-            message: `Cleanup completed! Removed ${deletedCount} expired tokens.`,
-            deletedCount: deletedCount
+            message: `Cleanup completed! Removed ${dbBlacklistDeleted} blacklisted tokens and ${sessionsDeleted} expired sessions.`,
+            deletedCount: {
+                blacklistedTokens: dbBlacklistDeleted,
+                expiredSessions: sessionsDeleted,
+                total: dbBlacklistDeleted + sessionsDeleted
+            }
         });
 
     } catch (error) {
@@ -291,25 +538,64 @@ const cleanupTokens = async (req, res) => {
     }
 };
 
-// Get blacklist statistics
+// Get blacklist and session statistics
 const getBlacklistStats = async (req, res) => {
     try {
-        const stats = tokenBlacklistManager.getStats();
+        // Database blacklist stats
+        const dbBlacklistCount = await TokenBlacklist.count();
+        const dbExpiredCount = await TokenBlacklist.count({
+            where: {
+                expires_at: {
+                    [db.Sequelize.Op.lt]: new Date()
+                }
+            }
+        });
+        
+        // Session stats
+        const totalSessions = await SessionLogs.count();
+        const activeSessions = await SessionLogs.count({
+            where: {
+                is_active: true,
+                refresh_token_expires_at: {
+                    [db.Sequelize.Op.gt]: new Date()
+                }
+            }
+        });
+        const expiredSessions = await SessionLogs.count({
+            where: {
+                refresh_token_expires_at: {
+                    [db.Sequelize.Op.lt]: new Date()
+                }
+            }
+        });
 
         res.status(200).json({
             flag: true,
-            message: "Blacklist statistics retrieved successfully",
-            stats: stats
+            message: "Token and session statistics retrieved successfully",
+            stats: {
+                tokenBlacklist: {
+                    total: dbBlacklistCount,
+                    expired: dbExpiredCount,
+                    active: dbBlacklistCount - dbExpiredCount
+                },
+                sessions: {
+                    total: totalSessions,
+                    active: activeSessions,
+                    expired: expiredSessions,
+                    inactive: totalSessions - activeSessions - expiredSessions
+                },
+                lastUpdated: new Date().toISOString()
+            }
         });
 
     } catch (error) {
         if (process.env.NODE_ENV === 'development') {
-            console.error('Get blacklist stats error:', error);
+            console.error('Get stats error:', error);
         }
         res.status(500).json({
             flag: false,
             error: error.message,
-            message: "Error retrieving blacklist statistics!"
+            message: "Error retrieving statistics!"
         });
     }
 };
@@ -319,6 +605,7 @@ module.exports = {
     verifyOTP,
     logout,
     logoutAllDevices,
+    refreshToken,
     cleanupTokens,
     getBlacklistStats
 };

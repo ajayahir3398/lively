@@ -50,10 +50,10 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 
 #### 2. Verify OTP
 - **Endpoint**: `POST /api/auth/verify-otp`
-- **Description**: Verifies OTP and returns JWT token
+- **Description**: Verifies OTP and returns access token + sets refresh token cookie
 - **Authentication**: Not required
 - **Request Body**: Phone number, OTP, and optional user details
-- **Response**: JWT token and user information
+- **Response**: Access token and user information (refresh token set as HttpOnly cookie)
 
 #### 3. Get Profile
 - **Endpoint**: `GET /api/auth/profile`
@@ -61,23 +61,35 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 - **Authentication**: Required (Bearer token)
 - **Response**: User profile information including date_of_birth
 
-#### 4. Logout
+#### 4. Refresh Token
+- **Endpoint**: `POST /api/auth/refresh-token`
+- **Description**: Refreshes access token using refresh token from HttpOnly cookie
+- **Authentication**: Not required (uses HttpOnly cookie)
+- **Response**: New access token
+
+#### 5. Logout
 - **Endpoint**: `POST /api/auth/logout`
-- **Description**: Invalidates current JWT token
-- **Authentication**: Required (Bearer token)
+- **Description**: Invalidates access token and refresh token, clears cookies
+- **Authentication**: Required (Bearer token or refresh cookie)
 - **Response**: Logout confirmation
 
-#### 5. Logout All Devices
+#### 6. Logout All Devices
 - **Endpoint**: `POST /api/auth/logout-all`
-- **Description**: Invalidates all JWT tokens for the user
+- **Description**: Invalidates all refresh tokens/sessions for the user across all devices
 - **Authentication**: Required (Bearer token)
 - **Response**: Logout confirmation
 
-#### 6. Token Cleanup
+#### 7. Token Cleanup
 - **Endpoint**: `POST /api/auth/cleanup-tokens`
-- **Description**: Manually triggers cleanup of expired tokens
+- **Description**: Manually triggers cleanup of expired tokens and sessions
 - **Authentication**: Required (Bearer token)
-- **Response**: Cleanup statistics
+- **Response**: Cleanup statistics for database tokens and sessions
+
+#### 8. Blacklist Statistics
+- **Endpoint**: `GET /api/auth/blacklist-stats`
+- **Description**: Retrieves statistics about token blacklist and active sessions
+- **Authentication**: Required (Bearer token)
+- **Response**: Database statistics for tokens and sessions
 
 ### Customer Endpoints
 
@@ -235,44 +247,92 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 #### LoginResponse
 ```json
 {
+  "flag": true,
   "message": "Login successful!",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "customer": {
-    "id": 1,
-    "customer_name": "John Doe",
-    "email": "john@example.com",
-    "login_domain": "+1234567890",
-    "is_new_user": false
-  }
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "hasBasicInfo": true
+}
+```
+
+#### RefreshTokenResponse
+```json
+{
+  "flag": true,
+  "message": "Token refreshed successfully!",
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
 
 #### LogoutResponse
 ```json
 {
-  "message": "Logout successful. Token has been invalidated.",
+  "flag": true,
+  "message": "Logout successful! Tokens have been invalidated.",
   "logoutTime": "2024-01-01T12:00:00.000Z"
+}
+```
+
+#### CleanupResponse
+```json
+{
+  "flag": true,
+  "message": "Cleanup completed! Removed 5 blacklisted tokens and 3 expired sessions.",
+  "deletedCount": {
+    "blacklistedTokens": 5,
+    "expiredSessions": 3,
+    "total": 8
+  }
+}
+```
+
+#### StatsResponse
+```json
+{
+  "flag": true,
+  "message": "Token and session statistics retrieved successfully",
+  "stats": {
+    "tokenBlacklist": {
+      "total": 10,
+      "expired": 2,
+      "active": 8
+    },
+    "sessions": {
+      "total": 25,
+      "active": 15,
+      "expired": 5,
+      "inactive": 5
+    },
+    "lastUpdated": "2024-01-01T12:00:00.000Z"
+  }
 }
 ```
 
 ## Authentication
 
-### JWT Bearer Token
-The API uses JWT (JSON Web Tokens) for authentication. To access protected endpoints:
+### Access + Refresh Token Flow
+The API uses a dual-token system with access and refresh tokens for enhanced security:
 
-1. **Login**: Use the `/api/auth/verify-otp` endpoint to get a JWT token
-2. **Authorization**: Include the token in the `Authorization` header:
+1. **Login**: Use the `/api/auth/verify-otp` endpoint to get an access token
+2. **Authorization**: Include the access token in the `Authorization` header:
    ```
-   Authorization: Bearer <your-jwt-token>
+   Authorization: Bearer <your-access-token>
    ```
-3. **Token Expiry**: Tokens expire after 30 days
-4. **Logout**: Use logout endpoints to invalidate tokens
+3. **Token Expiry**: 
+   - **Access Token**: Expires after 15 minutes
+   - **Refresh Token**: Expires after 7 days (stored as HttpOnly cookie)
+4. **Token Refresh**: When access token expires, use `/api/auth/refresh-token` to get a new one
+5. **Logout**: Use logout endpoints to invalidate tokens and clear cookies
+
+### Token Types
+- **Access Token**: Short-lived (15 min), used for API requests, stored in memory/localStorage
+- **Refresh Token**: Long-lived (7 days), used to get new access tokens, stored as HttpOnly cookie
 
 ### Token Management
-- **Individual Logout**: Invalidates current token
-- **Logout All Devices**: Invalidates all tokens for the user
-- **Automatic Cleanup**: Expired tokens are automatically cleaned up
-- **Manual Cleanup**: Admin endpoint for manual token cleanup
+- **Individual Logout**: Invalidates current tokens and clears cookies
+- **Logout All Devices**: Invalidates all refresh tokens/sessions for the user
+- **Automatic Cleanup**: Expired tokens and sessions are automatically cleaned up
+- **Manual Cleanup**: Admin endpoint for manual cleanup of database tokens and sessions
+- **Session Tracking**: All active sessions are tracked in the database with device information
 
 ## Error Handling
 
@@ -338,9 +398,11 @@ The API uses JWT (JSON Web Tokens) for authentication. To access protected endpo
 
 ### Testing Workflow
 1. **Send OTP**: Use `/auth/send-otp` to get an OTP
-2. **Login**: Use `/auth/verify-otp` to get a JWT token
-3. **Authorize**: Enter the token in the Swagger UI
+2. **Login**: Use `/auth/verify-otp` to get an access token (refresh token set as cookie)
+3. **Authorize**: Enter the access token in the Swagger UI
 4. **Test Protected Endpoints**: Try protected endpoints with authentication
+5. **Token Refresh**: When access token expires, use `/auth/refresh-token` to get a new one
+6. **Logout**: Use logout endpoints to clean up tokens and sessions
 
 ### Example Test Flow
 ```bash
@@ -349,14 +411,24 @@ curl -X POST "http://localhost:3000/api/auth/send-otp" \
   -H "Content-Type: application/json" \
   -d '{"phone_number": "+1234567890"}'
 
-# 2. Verify OTP and get token
+# 2. Verify OTP and get access token
 curl -X POST "http://localhost:3000/api/auth/verify-otp" \
   -H "Content-Type: application/json" \
-  -d '{"phone_number": "+1234567890", "otp": "123456"}'
+  -d '{"phone_number": "+1234567890", "otp": "123456"}' \
+  --cookie-jar cookies.txt
 
-# 3. Use token for protected endpoints
-curl -X GET "http://localhost:3000/api/auth/profile" \
-  -H "Authorization: Bearer <your-jwt-token>"
+# 3. Use access token for protected endpoints
+curl -X GET "http://localhost:3000/api/customer/profile" \
+  -H "Authorization: Bearer <your-access-token>"
+
+# 4. Refresh access token when expired
+curl -X POST "http://localhost:3000/api/auth/refresh-token" \
+  --cookie cookies.txt
+
+# 5. Logout and clear tokens
+curl -X POST "http://localhost:3000/api/auth/logout" \
+  -H "Authorization: Bearer <your-access-token>" \
+  --cookie cookies.txt
 ```
 
 ## Configuration
@@ -407,10 +479,13 @@ The Swagger configuration is located in `config/swagger.config.js` and includes:
 ## Security Considerations
 
 ### API Security
-- **HTTPS**: Use HTTPS in production
+- **HTTPS**: Use HTTPS in production for secure cookie transmission
 - **Rate Limiting**: Implemented on sensitive endpoints
 - **Input Validation**: Comprehensive validation on all inputs
 - **Error Handling**: Secure error messages without information leakage
+- **HttpOnly Cookies**: Refresh tokens stored as HttpOnly cookies for XSS protection
+- **Token Rotation**: Refresh tokens are rotated on each use for enhanced security
+- **Database Storage**: All tokens and sessions tracked in database for proper management
 
 ### Documentation Security
 - **Production URLs**: Use production URLs in production environment
@@ -427,9 +502,11 @@ The Swagger configuration is located in `config/swagger.config.js` and includes:
 - Check server logs for errors
 
 #### Authentication Issues
-- Ensure JWT token is valid and not expired
-- Check token format: `Bearer <token>`
-- Verify token hasn't been invalidated
+- Ensure access token is valid and not expired (15 min expiry)
+- Check token format: `Bearer <access-token>`
+- Verify token hasn't been blacklisted in database
+- If access token expired, use refresh token endpoint to get new one
+- Ensure refresh token cookie is present for refresh requests
 
 #### Schema Errors
 - Check schema definitions in `swagger.config.js`
@@ -452,9 +529,12 @@ The Swagger configuration is located in `config/swagger.config.js` and includes:
 
 ### Testing
 - **Test All Endpoints**: Verify all endpoints work as documented
-- **Test Error Cases**: Test error scenarios
-- **Test Authentication**: Verify authentication works correctly
+- **Test Error Cases**: Test error scenarios including token expiry
+- **Test Authentication**: Verify both access and refresh token flows
 - **Test Examples**: Ensure examples are valid
+- **Test Token Refresh**: Verify automatic token refresh works
+- **Test Session Management**: Test logout and logout-all functionality
+- **Test Cookie Handling**: Verify HttpOnly cookies work correctly
 
 ### Maintenance
 - **Regular Reviews**: Review documentation regularly
@@ -464,4 +544,4 @@ The Swagger configuration is located in `config/swagger.config.js` and includes:
 
 ## Conclusion
 
-The Swagger documentation provides a comprehensive, interactive guide to the Lively API. It enables developers to understand, test, and integrate with the API efficiently. The documentation is automatically generated from code comments, ensuring it stays up-to-date with the actual implementation. 
+The Swagger documentation provides a comprehensive, interactive guide to the Lively API with modern access + refresh token authentication. It enables developers to understand, test, and integrate with the API efficiently using secure token management practices. The documentation is automatically generated from code comments, ensuring it stays up-to-date with the actual implementation including the dual-token authentication system and database-backed session management. 

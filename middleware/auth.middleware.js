@@ -1,9 +1,9 @@
 const jwt = require('jsonwebtoken');
 const db = require('../models');
 const Customer_Login = db.customer_login;
+const TokenBlacklist = db.token_blacklist;
 
-// Token blacklist manager
-const tokenBlacklistManager = require('../utils/tokenBlacklistManager');
+const { verifyAccessToken, getTokenJTI } = require('../utils/tokenUtils');
 
 const verifyToken = async (req, res, next) => {
   const token = req.headers['x-access-token'] || req.headers['authorization'];
@@ -17,14 +17,34 @@ const verifyToken = async (req, res, next) => {
 
   try {
     const cleanToken = token.replace('Bearer ', '');
-    const decoded = jwt.verify(cleanToken, process.env.JWT_SECRET || 'your-secret-key');
+    const decoded = verifyAccessToken(cleanToken);
     
-    // Check if token is blacklisted
-    if (tokenBlacklistManager.isBlacklisted(cleanToken)) {
+    // Check if token type is access token
+    if (decoded.type !== 'access') {
       return res.status(401).json({ 
         flag: false,
-        message: 'Token has been invalidated' 
+        message: 'Invalid token type' 
       });
+    }
+    
+    // Check if token JTI is blacklisted in database
+    const jti = getTokenJTI(cleanToken);
+    if (jti) {
+      const blacklistedToken = await TokenBlacklist.findOne({
+        where: {
+          token: jti,
+          expires_at: {
+            [db.Sequelize.Op.gt]: new Date()
+          }
+        }
+      });
+      
+      if (blacklistedToken) {
+        return res.status(401).json({ 
+          flag: false,
+          message: 'Token has been invalidated' 
+        });
+      }
     }
     
     // Get user from database
@@ -83,12 +103,33 @@ const optionalAuth = async (req, res, next) => {
 
     if (token) {
       const cleanToken = token.replace('Bearer ', '');
-      const decoded = jwt.verify(cleanToken, process.env.JWT_SECRET || 'your-secret-key');
+      const decoded = verifyAccessToken(cleanToken);
       
-      const customer_login = await Customer_Login.findByPk(decoded.id);
-      if (customer_login && !customer_login.login_disabled && customer_login.state !== 'blocked') {
-        req.userId = decoded.id;
-        req.user = decoded;
+      // Only proceed if it's an access token and not blacklisted
+      if (decoded.type === 'access') {
+        const jti = getTokenJTI(cleanToken);
+        let isBlacklisted = false;
+        
+        // Check database blacklist
+        if (jti) {
+          const blacklistedToken = await TokenBlacklist.findOne({
+            where: {
+              token: jti,
+              expires_at: {
+                [db.Sequelize.Op.gt]: new Date()
+              }
+            }
+          });
+          isBlacklisted = !!blacklistedToken;
+        }
+        
+        if (!isBlacklisted) {
+          const customer_login = await Customer_Login.findByPk(decoded.id);
+          if (customer_login && !customer_login.login_disabled && customer_login.state !== 'blocked') {
+            req.userId = decoded.id;
+            req.user = decoded;
+          }
+        }
       }
     }
     next();
@@ -106,8 +147,7 @@ const isAdmin = (req, res, next) => {
 const authJwt = {
   verifyToken,
   optionalAuth,
-  isAdmin,
-  tokenBlacklistManager
+  isAdmin
 };
 
 module.exports = authJwt;
