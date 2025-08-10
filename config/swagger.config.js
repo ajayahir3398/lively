@@ -333,6 +333,30 @@ const options = {
               }
             }
           }
+        },
+        Activity: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', description: 'Activity ID', example: 1 },
+            name: { type: 'string', description: 'Activity name', example: 'Customer Registration', maxLength: 60 },
+            code: { type: 'string', description: 'Activity code', example: 'CUST_REG', maxLength: 20 },
+            description: { type: 'string', description: 'Activity description', example: 'Customer registration process', maxLength: 20 },
+            state: { type: 'string', description: 'Activity state', example: 'active' },
+            comments: { type: 'string', description: 'Additional comments', example: 'This activity handles customer registration', nullable: true },
+            create_date: { type: 'string', format: 'date-time', description: 'Created date', example: '2024-01-01T12:00:00.000Z' },
+            write_date: { type: 'string', format: 'date-time', description: 'Last updated date', example: '2024-01-01T12:00:00.000Z' }
+          }
+        },
+        Pagination: {
+          type: 'object',
+          properties: {
+            currentPage: { type: 'integer', description: 'Current page number', example: 1 },
+            totalPages: { type: 'integer', description: 'Total number of pages', example: 5 },
+            totalRecords: { type: 'integer', description: 'Total number of records', example: 47 },
+            limit: { type: 'integer', description: 'Records per page', example: 10 },
+            hasNextPage: { type: 'boolean', description: 'Whether there is a next page', example: true },
+            hasPrevPage: { type: 'boolean', description: 'Whether there is a previous page', example: false }
+          }
         }
       }
     },
@@ -344,10 +368,14 @@ const options = {
       {
         name: 'Customer',
         description: 'Customer management endpoints'
+      },
+      {
+        name: 'Activities',
+        description: 'Activity management endpoints'
       }
     ]
   },
-  apis: ['./routes/auth.routes.js', './routes/customer.routes.js']
+  apis: ['./routes/auth.routes.js', './routes/customer.routes.js', './routes/activity.routes.js']
 };
 
 const specs = swaggerJsdoc(options);

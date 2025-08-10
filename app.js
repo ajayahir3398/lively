@@ -181,5 +181,6 @@ app.get('/api/mobile-test', (req, res) => {
 // API Routes
 app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/customer", require("./routes/customer.routes"));
+app.use("/api/activity", require("./routes/activity.routes"));
 
 module.exports = app;
