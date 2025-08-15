@@ -17,5 +17,6 @@ db.customer = require("./customer.model")(sequelize, Sequelize);
 db.session_logs = require("./lp_session_logs.model")(sequelize, Sequelize);
 db.token_blacklist = require("./lp_token_blacklist.model")(sequelize, Sequelize);
 db.activity = require("./lp_activity.model")(sequelize, Sequelize);
+db.ir_attachment = require("./ir_attachment.model")(sequelize, Sequelize);
 
 module.exports = db;

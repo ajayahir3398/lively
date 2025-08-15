@@ -1,44 +1,48 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 
-// Determine environment and set appropriate server URLs
-const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
-const isProduction = process.env.NODE_ENV === 'production';
-
 const getServers = () => {
   const servers = [];
   
+  // Check environment variables inside the function (after .env is loaded)
+  const isDevelopment = process.env.NODE_ENV.trim() === 'development';
+  const isProduction = process.env.NODE_ENV.trim() === 'production';
+  
+  // If we're in development, prioritize localhost
   if (isDevelopment) {
     servers.push({
       url: `http://localhost:${process.env.PORT || 3000}/api`,
-      description: 'Development server'
+      description: 'Local Development Server (localhost)'
     });
-  }
-  
-  if (isProduction || process.env.PRODUCTION_URL) {
+    // Add production as secondary option for testing
     servers.push({
-      url: process.env.PRODUCTION_URL || 'https://lively-c70a.onrender.com/api',
-      description: 'Production server'
+      url: 'http://206.189.42.80:3000/api',
+      description: 'Production Server (for testing)'
     });
   }
-  
-  // Always include production server for deployed version
-  if (process.env.NODE_ENV === 'production' || !process.env.NODE_ENV) {
-    servers.push({
-      url: 'https://lively-c70a.onrender.com/api',
-      description: 'Production server'
-    });
+  // If we're in production, use production server
+  else if (isProduction) {
+    if (process.env.PRODUCTION_URL) {
+      servers.push({
+        url: process.env.PRODUCTION_URL,
+        description: 'Production Server'
+      });
+    } else {
+      servers.push({
+        url: 'http://206.189.42.80:3000/api',
+        description: 'Production Server (default)'
+      });
+    }
   }
-  
-  // Fallback - show both if environment is not set
-  if (!isDevelopment && !isProduction && !servers.length) {
+  // Fallback - show localhost first if environment is not set
+  else {
     servers.push(
       {
         url: `http://localhost:${process.env.PORT || 3000}/api`,
-        description: 'Development server'
+        description: 'Local Development Server (localhost)'
       },
       {
-        url: 'https://lively-c70a.onrender.com/api',
-        description: 'Production server'
+        url: 'http://206.189.42.80:3000/api',
+        description: 'Production Server'
       }
     );
   }
@@ -357,6 +361,50 @@ const options = {
             hasNextPage: { type: 'boolean', description: 'Whether there is a next page', example: true },
             hasPrevPage: { type: 'boolean', description: 'Whether there is a previous page', example: false }
           }
+        },
+        Attachment: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', description: 'Attachment ID', example: 1 },
+            name: { type: 'string', description: 'Attachment name', example: 'document.pdf' },
+            type: { type: 'string', description: 'Attachment type', example: 'binary' },
+            url: { type: 'string', description: 'Attachment URL', example: 'https://example.com/files/document.pdf', nullable: true },
+            file_size: { type: 'integer', description: 'File size in bytes', example: 1024000, nullable: true },
+            mimetype: { type: 'string', description: 'MIME type', example: 'application/pdf', nullable: true },
+            description: { type: 'string', description: 'Attachment description', example: 'Customer contract document', nullable: true },
+            public: { type: 'boolean', description: 'Whether attachment is public', example: false, nullable: true },
+            create_date: { type: 'string', format: 'date-time', description: 'Creation date', example: '2024-01-01T12:00:00.000Z', nullable: true },
+            write_date: { type: 'string', format: 'date-time', description: 'Last update date', example: '2024-01-01T12:00:00.000Z', nullable: true },
+            checksum: { type: 'string', description: 'File checksum', example: 'a1b2c3d4e5f6', nullable: true },
+            store_fname: { type: 'string', description: 'Stored filename', example: '2024/01/document_123.pdf', nullable: true },
+            res_id: { type: 'integer', description: 'Resource ID', example: 123, nullable: true },
+            res_model: { type: 'string', description: 'Resource model', example: 'res.partner', nullable: true },
+            res_field: { type: 'string', description: 'Resource field', example: 'image', nullable: true }
+          }
+        },
+        GetAttachmentsByResourceResponse: {
+          type: 'object',
+          properties: {
+            flag: { type: 'boolean', example: true },
+            message: { type: 'string', example: 'Attachments retrieved successfully!' },
+            data: {
+              type: 'array',
+              items: {
+                $ref: '#/components/schemas/Attachment'
+              }
+            },
+            count: { type: 'integer', description: 'Number of attachments', example: 3 }
+          }
+        },
+        GetAttachmentByIdResponse: {
+          type: 'object',
+          properties: {
+            flag: { type: 'boolean', example: true },
+            message: { type: 'string', example: 'Attachment retrieved successfully!' },
+            data: {
+              $ref: '#/components/schemas/Attachment'
+            }
+          }
         }
       }
     },
@@ -372,10 +420,14 @@ const options = {
       {
         name: 'Activities',
         description: 'Activity management endpoints'
+      },
+      {
+        name: 'Attachment',
+        description: 'Attachment management endpoints'
       }
     ]
   },
-  apis: ['./routes/auth.routes.js', './routes/customer.routes.js', './routes/activity.routes.js']
+  apis: ['./routes/auth.routes.js', './routes/customer.routes.js', './routes/activity.routes.js', './routes/attachment.routes.js']
 };
 
 const specs = swaggerJsdoc(options);
