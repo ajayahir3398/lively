@@ -7,7 +7,41 @@ const swaggerSpecs = require('./config/swagger.config');
 const app = express();
 const db = require("./models");
 
-// Security middleware
+// Cookie parsing middleware
+app.use(cookieParser());
+
+// Body parsing middleware with larger limits for mobile uploads
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+app.use(cors());
+
+// Swagger UI setup (BEFORE helmet middleware)
+app.use('/api-docs', (req, res, next) => {
+  // Disable CSP for swagger docs
+  res.removeHeader('Content-Security-Policy');
+  next();
+}, swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Lively API Documentation',
+  customfavIcon: '/favicon.ico',
+  swaggerOptions: {
+    persistAuthorization: true,
+    displayRequestDuration: true,
+    filter: true,
+    deepLinking: true,
+    tryItOutEnabled: true,
+    requestInterceptor: (request) => {
+      if (!request.headers) {
+        request.headers = {};
+      }
+      request.headers['Access-Control-Allow-Origin'] = '*';
+      return request;
+    }
+  }
+}));
+
+// Security middleware (AFTER swagger setup)
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -19,36 +53,6 @@ app.use(helmet({
   },
 }));
 
-app.use(cors());
-
-// Cookie parsing middleware
-app.use(cookieParser());
-
-// Body parsing middleware with larger limits for mobile uploads
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Swagger UI setup with forced production server
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'Lively API Documentation',
-  customfavIcon: '/favicon.ico',
-  swaggerOptions: {
-    persistAuthorization: true,
-    displayRequestDuration: true,
-    filter: true,
-    deepLinking: true,
-    tryItOutEnabled: true,
-    requestInterceptor: (request) => {
-      // Ensure proper CORS headers for API requests
-      if (!request.headers) {
-        request.headers = {};
-      }
-      request.headers['Access-Control-Allow-Origin'] = '*';
-      return request;
-    }
-  }
-}));
 // Sync DB
 db.sequelize.sync()
   .then(() => {
