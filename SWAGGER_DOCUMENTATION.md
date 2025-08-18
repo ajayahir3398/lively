@@ -36,6 +36,14 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 - **User Details**: Profile completion and status tracking
 - **Protected**: Example protected routes
 - **System**: Health checks and system endpoints
+- **Activities**: Activity management with automatic image URL generation
+
+### 🖼️ **Image URL Generation**
+- **Automatic Attachment Processing**: Activities automatically include image URLs from attachments
+- **Smart URL Construction**: URLs generated using `${ODOO_SERVER_URL}content/${attachment_id}` format
+- **Null Handling**: `imageUrl` field is `null` when no attachments exist
+- **Database Integration**: Seamlessly integrates with `ir_attachment` table using `res_id` and `res_model`
+- **Performance Optimized**: Only fetches attachment IDs, not full attachment data
 
 ## API Endpoints Documentation
 
@@ -112,6 +120,84 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 - **Description**: Retrieves all customers (Admin function)
 - **Authentication**: Required (Bearer token)
 - **Response**: List of all customers
+
+### Activity Endpoints
+
+#### 1. Get All Activities
+- **Endpoint**: `GET /api/activity`
+- **Description**: Retrieves all activities with optional filtering, pagination, and image URLs
+- **Authentication**: Required (Bearer token)
+- **Query Parameters**: 
+  - `page` (optional): Page number for pagination (default: 1)
+  - `limit` (optional): Records per page (default: 10)
+  - `state` (optional): Filter by activity state
+  - `code` (optional): Filter by activity code (partial match)
+  - `name` (optional): Filter by activity name (partial match)
+  - `sortBy` (optional): Sort field (id, name, code, state, create_date, write_date)
+  - `sortOrder` (optional): Sort order (ASC, DESC)
+- **Response**: List of activities with pagination info and imageUrl field
+- **Features**: 
+  - Automatic image URL generation from attachments
+  - URL format: `${ODOO_SERVER_URL}content/${attachment_id}`
+  - `imageUrl` is `null` if no attachments exist
+
+#### 2. Get Activity by ID
+- **Endpoint**: `GET /api/activity/{id}`
+- **Description**: Retrieves a specific activity by its ID with image URL
+- **Authentication**: Required (Bearer token)
+- **Path Parameters**: `id` - Activity ID
+- **Response**: Activity details with imageUrl field
+
+#### 3. Get Activity by Code
+- **Endpoint**: `GET /api/activity/code/{code}`
+- **Description**: Retrieves a specific activity by its code with image URL
+- **Authentication**: Required (Bearer token)
+- **Path Parameters**: `code` - Activity code
+- **Response**: Activity details with imageUrl field
+
+#### 4. Get Activities by State
+- **Endpoint**: `GET /api/activity/state/{state}`
+- **Description**: Retrieves all activities with a specific state with image URLs
+- **Authentication**: Required (Bearer token)
+- **Path Parameters**: `state` - Activity state
+- **Query Parameters**: 
+  - `page` (optional): Page number for pagination
+  - `limit` (optional): Records per page
+- **Response**: List of activities with pagination info and imageUrl field
+
+#### 5. Get Courses by Activity ID
+- **Endpoint**: `GET /api/activity/{id}/courses`
+- **Description**: Retrieves all courses associated with a specific activity
+- **Authentication**: Required (Bearer token)
+- **Path Parameters**: `id` - Activity ID
+- **Query Parameters**: 
+  - `page` (optional): Page number for pagination (default: 1)
+  - `limit` (optional): Records per page (default: 10)
+- **Response**: List of courses with pagination info and imageUrl field
+- **Features**: 
+  - Validates activity existence before fetching courses
+  - Uses `course_id` field to find related courses
+  - Returns 404 if no courses found for the activity
+  - Automatic image URL generation from attachments
+  - URL format: `${ODOO_SERVER_URL}content/${attachment_id}`
+  - `imageUrl` is `null` if no attachments exist
+
+#### 6. Get Quick Sessions by Activity ID
+- **Endpoint**: `GET /api/activity/{id}/quick-sessions`
+- **Description**: Retrieves all quick sessions associated with a specific activity
+- **Authentication**: Required (Bearer token)
+- **Path Parameters**: `id` - Activity ID
+- **Query Parameters**: 
+  - `page` (optional): Page number for pagination (default: 1)
+  - `limit` (optional): Records per page (default: 10)
+- **Response**: List of quick sessions with pagination info and imageUrl field
+- **Features**: 
+  - Validates activity existence before fetching quick sessions
+  - Uses `quick_sess_id` field to find related quick sessions
+  - Returns 404 if no quick sessions found for the activity
+  - Automatic image URL generation from attachments
+  - URL format: `${ODOO_SERVER_URL}content/${attachment_id}`
+  - `imageUrl` is `null` if no attachments exist
 
 ### User Details Endpoints
 
@@ -304,6 +390,84 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
     },
     "lastUpdated": "2024-01-01T12:00:00.000Z"
   }
+}
+```
+
+#### Activity
+```json
+{
+  "id": 1,
+  "name": "Customer Registration",
+  "code": "CUST_REG",
+  "description": "Customer registration process",
+  "state": "active",
+  "comments": "This activity handles customer registration",
+  "create_date": "2024-01-01T12:00:00.000Z",
+  "write_date": "2024-01-01T12:00:00.000Z",
+  "imageUrl": "https://odoo-server.com/content/123"
+}
+```
+
+#### ActivityListResponse
+```json
+{
+  "flag": true,
+  "message": "Activities retrieved successfully!",
+  "data": [
+    {
+      "id": 1,
+      "name": "Customer Registration",
+      "code": "CUST_REG",
+      "description": "Customer registration process",
+      "state": "active",
+      "comments": "This activity handles customer registration",
+      "create_date": "2024-01-01T12:00:00.000Z",
+      "write_date": "2024-01-01T12:00:00.000Z",
+      "imageUrl": "https://odoo-server.com/content/123"
+    }
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 5,
+    "totalRecords": 47,
+    "limit": 10,
+    "hasNextPage": true,
+    "hasPrevPage": false
+  }
+}
+```
+
+#### Course
+```json
+{
+  "id": 1,
+  "course_ref_id": 100,
+  "course_id": 1,
+  "name": "Introduction to Programming",
+  "code": "PROG101",
+  "description": "Basic programming concepts",
+  "state": "active",
+  "comments": "Beginner friendly course",
+  "create_date": "2024-01-01T12:00:00.000Z",
+  "write_date": "2024-01-01T12:00:00.000Z",
+  "imageUrl": "https://odoo-server.com/content/123"
+}
+```
+
+#### QuickSession
+```json
+{
+  "id": 1,
+  "sess_ref_id": 200,
+  "quick_sess_id": 1,
+  "name": "Quick Demo Session",
+  "code": "DEMO001",
+  "description": "Quick demonstration",
+  "state": "active",
+  "comments": "15-minute demo session",
+  "create_date": "2024-01-01T12:00:00.000Z",
+  "write_date": "2024-01-01T12:00:00.000Z",
+  "imageUrl": "https://odoo-server.com/content/456"
 }
 ```
 

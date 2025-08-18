@@ -1,5 +1,6 @@
 const db = require('../models');
 const Activity = db.activity;
+const IrAttachment = db.ir_attachment;
 
 // Get all activities with optional filtering and pagination
 const getAllActivities = async (req, res) => {
@@ -55,7 +56,30 @@ const getAllActivities = async (req, res) => {
                 'comments',
                 'create_date',
                 'write_date'
+            ],
+            include: [
+                {
+                    model: IrAttachment,
+                    as: 'attachments',
+                    attributes: ['id'],
+                    where: {
+                        res_model: 'lp.activity'
+                    },
+                    required: false
+                }
             ]
+        });
+
+        // Add imageUrl to each activity
+        const activitiesWithImageUrl = result.rows.map(activity => {
+            const activityData = activity.toJSON();
+            if (activity.attachments && activity.attachments.length > 0) {
+                const attachmentId = activity.attachments[0].id;
+                activityData.imageUrl = `${process.env.ODOO_SERVER_URL}content/${attachmentId}`;
+            } else {
+                activityData.imageUrl = null;
+            }
+            return activityData;
         });
 
         // Calculate pagination info
@@ -66,7 +90,7 @@ const getAllActivities = async (req, res) => {
         res.status(200).json({
             flag: true,
             message: "Activities retrieved successfully!",
-            data: result.rows,
+            data: activitiesWithImageUrl,
             pagination: {
                 currentPage: parseInt(page),
                 totalPages,
@@ -112,6 +136,17 @@ const getActivityById = async (req, res) => {
                 'comments',
                 'create_date',
                 'write_date'
+            ],
+            include: [
+                {
+                    model: IrAttachment,
+                    as: 'attachments',
+                    attributes: ['id'],
+                    where: {
+                        res_model: 'lp.activity'
+                    },
+                    required: false
+                }
             ]
         });
 
@@ -122,10 +157,19 @@ const getActivityById = async (req, res) => {
             });
         }
 
+        // Add imageUrl to activity
+        const activityData = activity.toJSON();
+        if (activity.attachments && activity.attachments.length > 0) {
+            const attachmentId = activity.attachments[0].id;
+            activityData.imageUrl = `${process.env.ODOO_SERVER_URL}content/${attachmentId}`;
+        } else {
+            activityData.imageUrl = null;
+        }
+
         res.status(200).json({
             flag: true,
             message: "Activity retrieved successfully!",
-            data: activity
+            data: activityData
         });
 
     } catch (error) {
@@ -164,6 +208,17 @@ const getActivityByCode = async (req, res) => {
                 'comments',
                 'create_date',
                 'write_date'
+            ],
+            include: [
+                {
+                    model: IrAttachment,
+                    as: 'attachments',
+                    attributes: ['id'],
+                    where: {
+                        res_model: 'lp.activity'
+                    },
+                    required: false
+                }
             ]
         });
 
@@ -174,10 +229,19 @@ const getActivityByCode = async (req, res) => {
             });
         }
 
+        // Add imageUrl to activity
+        const activityData = activity.toJSON();
+        if (activity.attachments && activity.attachments.length > 0) {
+            const attachmentId = activity.attachments[0].id;
+            activityData.imageUrl = `${process.env.ODOO_SERVER_URL}content/${attachmentId}`;
+        } else {
+            activityData.imageUrl = null;
+        }
+
         res.status(200).json({
             flag: true,
             message: "Activity retrieved successfully!",
-            data: activity
+            data: activityData
         });
 
     } catch (error) {
@@ -223,6 +287,17 @@ const getActivitiesByState = async (req, res) => {
                 'comments',
                 'create_date',
                 'write_date'
+            ],
+            include: [
+                {
+                    model: IrAttachment,
+                    as: 'attachments',
+                    attributes: ['id'],
+                    where: {
+                        res_model: 'lp.activity'
+                    },
+                    required: false
+                }
             ]
         });
 
@@ -233,6 +308,18 @@ const getActivitiesByState = async (req, res) => {
             });
         }
 
+        // Add imageUrl to each activity
+        const activitiesWithImageUrl = result.rows.map(activity => {
+            const activityData = activity.toJSON();
+            if (activity.attachments && activity.attachments.length > 0) {
+                const attachmentId = activity.attachments[0].id;
+                activityData.imageUrl = `${process.env.ODOO_SERVER_URL}content/${attachmentId}`;
+            } else {
+                activityData.imageUrl = null;
+            }
+            return activityData;
+        });
+
         // Calculate pagination info
         const totalPages = Math.ceil(result.count / limit);
         const hasNextPage = page < totalPages;
@@ -241,7 +328,7 @@ const getActivitiesByState = async (req, res) => {
         res.status(200).json({
             flag: true,
             message: `Activities with state '${state}' retrieved successfully!`,
-            data: result.rows,
+            data: activitiesWithImageUrl,
             pagination: {
                 currentPage: parseInt(page),
                 totalPages,
@@ -264,9 +351,225 @@ const getActivitiesByState = async (req, res) => {
     }
 };
 
+// Get courses by activity ID
+const getCoursesByActivityId = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { page = 1, limit = 10 } = req.query;
+
+        // Validate ID parameter
+        if (!id || isNaN(id)) {
+            return res.status(400).json({
+                flag: false,
+                message: "Valid activity ID is required!"
+            });
+        }
+
+        // Calculate offset for pagination
+        const offset = (page - 1) * limit;
+
+        // First check if activity exists
+        const activity = await Activity.findByPk(id);
+        if (!activity) {
+            return res.status(404).json({
+                flag: false,
+                message: "Activity not found!"
+            });
+        }
+
+        // Get courses associated with this activity
+        const result = await db.course.findAndCountAll({
+            where: { course_id: parseInt(id) },
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            order: [['create_date', 'DESC']],
+            attributes: [
+                'id',
+                'course_ref_id',
+                'course_id',
+                'name',
+                'code',
+                'description',
+                'state',
+                'comments',
+                'create_date',
+                'write_date'
+            ],
+            include: [
+                {
+                    model: IrAttachment,
+                    as: 'attachments',
+                    attributes: ['id'],
+                    where: {
+                        res_model: 'lp.course'
+                    },
+                    required: false
+                }
+            ]
+        });
+
+        if (result.count === 0) {
+            return res.status(404).json({
+                flag: false,
+                message: "No courses found for this activity!"
+            });
+        }
+
+        // Add imageUrl to each course
+        const coursesWithImageUrl = result.rows.map(course => {
+            const courseData = course.toJSON();
+            if (course.attachments && course.attachments.length > 0) {
+                const attachmentId = course.attachments[0].id;
+                courseData.imageUrl = `${process.env.ODOO_SERVER_URL}content/${attachmentId}`;
+            } else {
+                courseData.imageUrl = null;
+            }
+            return courseData;
+        });
+
+        // Calculate pagination info
+        const totalPages = Math.ceil(result.count / limit);
+        const hasNextPage = page < totalPages;
+        const hasPrevPage = page > 1;
+
+        res.status(200).json({
+            flag: true,
+            message: "Courses retrieved successfully!",
+            data: coursesWithImageUrl,
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages,
+                totalRecords: result.count,
+                limit: parseInt(limit),
+                hasNextPage,
+                hasPrevPage
+            }
+        });
+
+    } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Get courses by activity ID error:', error);
+        }
+        res.status(500).json({
+            flag: false,
+            error: error.message,
+            message: "Error retrieving courses!"
+        });
+    }
+};
+
+// Get quick sessions by activity ID
+const getQuickSessionsByActivityId = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { page = 1, limit = 10 } = req.query;
+
+        // Validate ID parameter
+        if (!id || isNaN(id)) {
+            return res.status(400).json({
+                flag: false,
+                message: "Valid activity ID is required!"
+            });
+        }
+
+        // Calculate offset for pagination
+        const offset = (page - 1) * limit;
+
+        // First check if activity exists
+        const activity = await Activity.findByPk(id);
+        if (!activity) {
+            return res.status(404).json({
+                flag: false,
+                message: "Activity not found!"
+            });
+        }
+
+        // Get quick sessions associated with this activity
+        const result = await db.quickSession.findAndCountAll({
+            where: { quick_sess_id: parseInt(id) },
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            order: [['create_date', 'DESC']],
+            attributes: [
+                'id',
+                'sess_ref_id',
+                'quick_sess_id',
+                'name',
+                'code',
+                'description',
+                'state',
+                'comments',
+                'create_date',
+                'write_date'
+            ],
+            include: [
+                {
+                    model: IrAttachment,
+                    as: 'attachments',
+                    attributes: ['id'],
+                    where: {
+                        res_model: 'lp.quick_sess'
+                    },
+                    required: false
+                }
+            ]
+        });
+
+        if (result.count === 0) {
+            return res.status(404).json({
+                flag: false,
+                message: "No quick sessions found for this activity!"
+            });
+        }
+
+        // Add imageUrl to each quick session
+        const quickSessionsWithImageUrl = result.rows.map(quickSession => {
+            const quickSessionData = quickSession.toJSON();
+            if (quickSession.attachments && quickSession.attachments.length > 0) {
+                const attachmentId = quickSession.attachments[0].id;
+                quickSessionData.imageUrl = `${process.env.ODOO_SERVER_URL}content/${attachmentId}`;
+            } else {
+                quickSessionData.imageUrl = null;
+            }
+            return quickSessionData;
+        });
+
+        // Calculate pagination info
+        const totalPages = Math.ceil(result.count / limit);
+        const hasNextPage = page < totalPages;
+        const hasPrevPage = page > 1;
+
+        res.status(200).json({
+            flag: true,
+            message: "Quick sessions retrieved successfully!",
+            data: quickSessionsWithImageUrl,
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages,
+                totalRecords: result.count,
+                limit: parseInt(limit),
+                hasNextPage,
+                hasPrevPage
+            }
+        });
+
+    } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Get quick sessions by activity ID error:', error);
+        }
+        res.status(500).json({
+            flag: false,
+            error: error.message,
+            message: "Error retrieving quick sessions!"
+        });
+    }
+};
+
 module.exports = {
     getAllActivities,
     getActivityById,
     getActivityByCode,
-    getActivitiesByState
+    getActivitiesByState,
+    getCoursesByActivityId,
+    getQuickSessionsByActivityId
 };

@@ -60,6 +60,17 @@ module.exports = (sequelize, Sequelize) => {
 
   // Define associations
   Activity.associate = function(models) {
+    // Association with attachments
+    if (models.ir_attachment) {
+      Activity.hasMany(models.ir_attachment, {
+        foreignKey: 'res_id',
+        as: 'attachments',
+        scope: {
+          res_model: 'lp.activity'
+        }
+      });
+    }
+
     // Foreign key associations for create_uid and write_uid
     // These reference res_users table which may not be in this project yet
     // Uncomment when res_users model is available:

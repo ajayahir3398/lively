@@ -348,7 +348,55 @@ const options = {
             state: { type: 'string', description: 'Activity state', example: 'active' },
             comments: { type: 'string', description: 'Additional comments', example: 'This activity handles customer registration', nullable: true },
             create_date: { type: 'string', format: 'date-time', description: 'Created date', example: '2024-01-01T12:00:00.000Z' },
-            write_date: { type: 'string', format: 'date-time', description: 'Last updated date', example: '2024-01-01T12:00:00.000Z' }
+            write_date: { type: 'string', format: 'date-time', description: 'Last updated date', example: '2024-01-01T12:00:00.000Z' },
+            imageUrl: { 
+              type: 'string', 
+              description: 'URL to the activity image/attachment', 
+              example: 'https://odoo-server.com/content/123', 
+              nullable: true 
+            }
+          }
+        },
+        Course: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', description: 'Course ID', example: 1 },
+            course_ref_id: { type: 'integer', description: 'Course Reference ID', example: 100, nullable: true },
+            course_id: { type: 'integer', description: 'Associated Activity ID', example: 1 },
+            name: { type: 'string', description: 'Course name', example: 'Introduction to Programming', maxLength: 60 },
+            code: { type: 'string', description: 'Course code', example: 'PROG101', maxLength: 20 },
+            description: { type: 'string', description: 'Course description', example: 'Basic programming concepts', maxLength: 20 },
+            state: { type: 'string', description: 'Course state', example: 'active' },
+            comments: { type: 'string', description: 'Additional comments', example: 'Beginner friendly course', nullable: true },
+            create_date: { type: 'string', format: 'date-time', description: 'Created date', example: '2024-01-01T12:00:00.000Z' },
+            write_date: { type: 'string', format: 'date-time', description: 'Last updated date', example: '2024-01-01T12:00:00.000Z' },
+            imageUrl: { 
+              type: 'string', 
+              description: 'URL to the course image/attachment', 
+              example: 'https://odoo-server.com/content/123', 
+              nullable: true 
+            }
+          }
+        },
+        QuickSession: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', description: 'Quick Session ID', example: 1 },
+            sess_ref_id: { type: 'integer', description: 'Session Reference ID', example: 200, nullable: true },
+            quick_sess_id: { type: 'integer', description: 'Associated Activity ID', example: 1 },
+            name: { type: 'string', description: 'Session name', example: 'Quick Demo Session', maxLength: 60 },
+            code: { type: 'string', description: 'Session code', example: 'DEMO001', maxLength: 20 },
+            description: { type: 'string', description: 'Session description', example: 'Quick demonstration', maxLength: 20 },
+            state: { type: 'string', description: 'Session state', example: 'active' },
+            comments: { type: 'string', description: 'Additional comments', example: '15-minute demo session', nullable: true },
+            create_date: { type: 'string', format: 'date-time', description: 'Created date', example: '2024-01-01T12:00:00.000Z' },
+            write_date: { type: 'string', format: 'date-time', description: 'Last updated date', example: '2024-01-01T12:00:00.000Z' },
+            imageUrl: { 
+              type: 'string', 
+              description: 'URL to the quick session image/attachment', 
+              example: 'https://odoo-server.com/content/123', 
+              nullable: true 
+            }
           }
         },
         Pagination: {

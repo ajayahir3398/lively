@@ -20,9 +20,21 @@ const getActivitiesByState = async (req, res) => {
     return await activityService.getActivitiesByState(req, res);
 };
 
+// Get courses by activity ID controller
+const getCoursesByActivityId = async (req, res) => {
+    return await activityService.getCoursesByActivityId(req, res);
+};
+
+// Get quick sessions by activity ID controller
+const getQuickSessionsByActivityId = async (req, res) => {
+    return await activityService.getQuickSessionsByActivityId(req, res);
+};
+
 module.exports = {
     getAllActivities,
     getActivityById,
     getActivityByCode,
-    getActivitiesByState
+    getActivitiesByState,
+    getCoursesByActivityId,
+    getQuickSessionsByActivityId
 };
