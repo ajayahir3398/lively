@@ -2,21 +2,16 @@ const swaggerJsdoc = require('swagger-jsdoc');
 
 const getServers = () => {
   const servers = [];
-  
+
   // Check environment variables inside the function (after .env is loaded)
   const isDevelopment = process.env.NODE_ENV.trim() === 'development';
   const isProduction = process.env.NODE_ENV.trim() === 'production';
-  
+
   // If we're in development, prioritize localhost
   if (isDevelopment) {
     servers.push({
       url: `http://localhost:${process.env.PORT || 3000}/api`,
       description: 'Local Development Server (localhost)'
-    });
-    // Add production as secondary option for testing
-    servers.push({
-      url: 'http://206.189.42.80:3000/api',
-      description: 'Production Server (for testing)'
     });
   }
   // If we're in production, use production server
@@ -25,11 +20,6 @@ const getServers = () => {
       servers.push({
         url: process.env.PRODUCTION_URL,
         description: 'Production Server'
-      });
-    } else {
-      servers.push({
-        url: 'http://206.189.42.80:3000/api',
-        description: 'Production Server (default)'
       });
     }
   }
@@ -46,7 +36,7 @@ const getServers = () => {
       }
     );
   }
-  
+
   return servers;
 };
 
@@ -121,15 +111,15 @@ const options = {
           type: 'object',
           required: ['name', 'email'],
           properties: {
-            name: { 
-              type: 'string', 
+            name: {
+              type: 'string',
               description: 'Customer name',
               example: 'John Doe',
               minLength: 2,
               maxLength: 60
             },
-            email: { 
-              type: 'string', 
+            email: {
+              type: 'string',
               format: 'email',
               description: 'Customer email address',
               example: 'john.doe@example.com',
@@ -156,108 +146,108 @@ const options = {
         UpdateCustomerProfileRequest: {
           type: 'object',
           properties: {
-            name: { 
-              type: 'string', 
+            name: {
+              type: 'string',
               description: 'Customer name',
               example: 'John Doe',
               minLength: 2,
               maxLength: 60
             },
-            email: { 
-              type: 'string', 
+            email: {
+              type: 'string',
               format: 'email',
               description: 'Primary email address',
               example: 'john.doe@example.com',
               maxLength: 40
             },
-            email2: { 
-              type: 'string', 
+            email2: {
+              type: 'string',
               format: 'email',
               description: 'Alternate email address',
               example: 'john.alternate@example.com',
               maxLength: 40
             },
-            login_name: { 
-              type: 'string', 
+            login_name: {
+              type: 'string',
               description: 'Login name',
               example: 'johndoe',
               minLength: 2,
               maxLength: 100
             },
-            mobile_phone1: { 
-              type: 'string', 
+            mobile_phone1: {
+              type: 'string',
               description: 'Primary mobile phone number',
               example: '1234567890',
               maxLength: 20
             },
-            mobile_phone2: { 
-              type: 'string', 
+            mobile_phone2: {
+              type: 'string',
               description: 'Alternate mobile phone number',
               example: '1987654321',
               maxLength: 20
             },
-            home_phone: { 
-              type: 'string', 
+            home_phone: {
+              type: 'string',
               description: 'Home phone number',
               example: '+1555123456',
               maxLength: 20
             },
-            work_phone: { 
-              type: 'string', 
+            work_phone: {
+              type: 'string',
               description: 'Work phone number',
               example: '+1555987654',
               maxLength: 20
             },
-            work_phone_ext: { 
-              type: 'string', 
+            work_phone_ext: {
+              type: 'string',
               description: 'Work phone extension',
               example: '123',
               maxLength: 10
             },
-            gender: { 
-              type: 'string', 
+            gender: {
+              type: 'string',
               description: 'Gender',
               example: 'male',
               enum: ['male', 'female', 'other']
             },
-            marital_status: { 
-              type: 'string', 
+            marital_status: {
+              type: 'string',
               description: 'Marital status',
               example: 'married',
               enum: ['single', 'married', 'divorced', 'widowed', 'separated']
             },
-            date_of_birth: { 
-              type: 'string', 
+            date_of_birth: {
+              type: 'string',
               format: 'date',
               description: 'Date of birth',
               example: '1990-01-15'
             },
-            national_id_no: { 
-              type: 'string', 
+            national_id_no: {
+              type: 'string',
               description: 'National ID number',
               example: '123456789',
               maxLength: 20
             },
-            other_id_no: { 
-              type: 'string', 
+            other_id_no: {
+              type: 'string',
               description: 'Other ID number',
               example: '987654321',
               maxLength: 20
             },
-            national_id_expiry: { 
-              type: 'string', 
+            national_id_expiry: {
+              type: 'string',
               format: 'date',
               description: 'National ID expiry date',
               example: '2030-12-31'
             },
-            other_id_expiry: { 
-              type: 'string', 
+            other_id_expiry: {
+              type: 'string',
               format: 'date',
               description: 'Other ID expiry date',
               example: '2025-06-30'
             },
-            comments: { 
-              type: 'string', 
+            comments: {
+              type: 'string',
               description: 'Additional comments',
               example: 'Customer prefers SMS notifications',
               maxLength: 1000
@@ -349,11 +339,11 @@ const options = {
             comments: { type: 'string', description: 'Additional comments', example: 'This activity handles customer registration', nullable: true },
             create_date: { type: 'string', format: 'date-time', description: 'Created date', example: '2024-01-01T12:00:00.000Z' },
             write_date: { type: 'string', format: 'date-time', description: 'Last updated date', example: '2024-01-01T12:00:00.000Z' },
-            imageUrl: { 
-              type: 'string', 
-              description: 'URL to the activity image/attachment', 
-              example: 'https://odoo-server.com/content/123', 
-              nullable: true 
+            imageUrl: {
+              type: 'string',
+              description: 'URL to the activity image/attachment',
+              example: 'https://odoo-server.com/content/123',
+              nullable: true
             }
           }
         },
@@ -370,11 +360,11 @@ const options = {
             comments: { type: 'string', description: 'Additional comments', example: 'Beginner friendly course', nullable: true },
             create_date: { type: 'string', format: 'date-time', description: 'Created date', example: '2024-01-01T12:00:00.000Z' },
             write_date: { type: 'string', format: 'date-time', description: 'Last updated date', example: '2024-01-01T12:00:00.000Z' },
-            imageUrl: { 
-              type: 'string', 
-              description: 'URL to the course image/attachment', 
-              example: 'https://odoo-server.com/content/123', 
-              nullable: true 
+            imageUrl: {
+              type: 'string',
+              description: 'URL to the course image/attachment',
+              example: 'https://odoo-server.com/content/123',
+              nullable: true
             }
           }
         },
@@ -391,11 +381,11 @@ const options = {
             comments: { type: 'string', description: 'Additional comments', example: '15-minute demo session', nullable: true },
             create_date: { type: 'string', format: 'date-time', description: 'Created date', example: '2024-01-01T12:00:00.000Z' },
             write_date: { type: 'string', format: 'date-time', description: 'Last updated date', example: '2024-01-01T12:00:00.000Z' },
-            imageUrl: { 
-              type: 'string', 
-              description: 'URL to the quick session image/attachment', 
-              example: 'https://odoo-server.com/content/123', 
-              nullable: true 
+            imageUrl: {
+              type: 'string',
+              description: 'URL to the quick session image/attachment',
+              example: 'https://odoo-server.com/content/123',
+              nullable: true
             }
           }
         },
