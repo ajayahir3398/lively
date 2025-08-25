@@ -379,14 +379,14 @@ const getCoursesByActivityId = async (req, res) => {
 
         // Get courses associated with this activity
         const result = await db.course.findAndCountAll({
-            where: { course_id: parseInt(id) },
+            where: { activity_id: parseInt(id) },
             limit: parseInt(limit),
             offset: parseInt(offset),
             order: [['create_date', 'DESC']],
             attributes: [
                 'id',
                 'course_ref_id',
-                'course_id',
+                'activity_id',
                 'name',
                 'code',
                 'description',
@@ -486,14 +486,14 @@ const getQuickSessionsByActivityId = async (req, res) => {
 
         // Get quick sessions associated with this activity
         const result = await db.quickSession.findAndCountAll({
-            where: { quick_sess_id: parseInt(id) },
+            where: { activity_id: parseInt(id) },
             limit: parseInt(limit),
             offset: parseInt(offset),
             order: [['create_date', 'DESC']],
             attributes: [
                 'id',
                 'sess_ref_id',
-                'quick_sess_id',
+                'activity_id',
                 'name',
                 'code',
                 'description',

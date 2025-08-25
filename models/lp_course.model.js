@@ -9,7 +9,7 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.INTEGER,
       comment: 'Course Reference'
     },
-    course_id: {
+    activity_id: {
       type: Sequelize.INTEGER,
       comment: 'Customer Courses'
     },
@@ -30,7 +30,7 @@ module.exports = (sequelize, Sequelize) => {
       comment: 'Customer code'
     },
     description: {
-      type: Sequelize.STRING(20),
+      type: Sequelize.TEXT,
       comment: 'Description'
     },
     state: {
@@ -60,8 +60,8 @@ module.exports = (sequelize, Sequelize) => {
         fields: ['code']
       },
       {
-        name: 'lp_course_course_id_index',
-        fields: ['course_id']
+        name: 'lp_course_activity_id_index',
+        fields: ['activity_id']
       },
       {
         name: 'lp_course_name_index',
@@ -72,10 +72,10 @@ module.exports = (sequelize, Sequelize) => {
 
   // Define associations
   Course.associate = function(models) {
-    // Foreign key association for course_id referencing lp_activity
+    // Foreign key association for activity_id referencing lp_activity
     if (models.activity) {
       Course.belongsTo(models.activity, {
-        foreignKey: 'course_id',
+        foreignKey: 'activity_id',
         as: 'activity',
         onUpdate: 'NO ACTION',
         onDelete: 'SET NULL'

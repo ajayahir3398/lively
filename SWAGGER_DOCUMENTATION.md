@@ -176,7 +176,7 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 - **Response**: List of courses with pagination info and imageUrl field
 - **Features**: 
   - Validates activity existence before fetching courses
-  - Uses `course_id` field to find related courses
+  - Uses `activity_id` field to find related courses
   - Returns 404 if no courses found for the activity
   - Automatic image URL generation from attachments
   - URL format: `${ODOO_SERVER_URL}content/${attachment_id}`
@@ -193,7 +193,7 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 - **Response**: List of quick sessions with pagination info and imageUrl field
 - **Features**: 
   - Validates activity existence before fetching quick sessions
-  - Uses `quick_sess_id` field to find related quick sessions
+  - Uses `activity_id` field to find related quick sessions
   - Returns 404 if no quick sessions found for the activity
   - Automatic image URL generation from attachments
   - URL format: `${ODOO_SERVER_URL}content/${attachment_id}`
@@ -442,7 +442,7 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 {
   "id": 1,
   "course_ref_id": 100,
-  "course_id": 1,
+  "activity_id": 1,
   "name": "Introduction to Programming",
   "code": "PROG101",
   "description": "Basic programming concepts",
@@ -459,7 +459,7 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 {
   "id": 1,
   "sess_ref_id": 200,
-  "quick_sess_id": 1,
+  "activity_id": 1,
   "name": "Quick Demo Session",
   "code": "DEMO001",
   "description": "Quick demonstration",

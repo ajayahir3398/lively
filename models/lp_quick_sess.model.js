@@ -9,9 +9,9 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.INTEGER,
       comment: 'Session Reference'
     },
-    quick_sess_id: {
+    activity_id: {
       type: Sequelize.INTEGER,
-      comment: 'Customer Session'
+      comment: 'Customer Sessions'
     },
     create_uid: {
       type: Sequelize.INTEGER,
@@ -30,7 +30,7 @@ module.exports = (sequelize, Sequelize) => {
       comment: 'Session code'
     },
     description: {
-      type: Sequelize.STRING(20),
+      type: Sequelize.TEXT,
       comment: 'Description'
     },
     state: {
@@ -64,18 +64,18 @@ module.exports = (sequelize, Sequelize) => {
         fields: ['name']
       },
       {
-        name: 'lp_quick_sess_quick_sess_id_index',
-        fields: ['quick_sess_id']
+        name: 'lp_quick_sess_activity_id_index',
+        fields: ['activity_id']
       }
     ]
   });
 
   // Define associations
   QuickSession.associate = function(models) {
-    // Foreign key association for quick_sess_id referencing lp_activity
+    // Foreign key association for activity_id referencing lp_activity
     if (models.activity) {
       QuickSession.belongsTo(models.activity, {
-        foreignKey: 'quick_sess_id',
+        foreignKey: 'activity_id',
         as: 'activity',
         onUpdate: 'NO ACTION',
         onDelete: 'SET NULL'

@@ -22,7 +22,7 @@ module.exports = (sequelize, Sequelize) => {
       comment: 'Customer code'
     },
     description: {
-      type: Sequelize.STRING(20),
+      type: Sequelize.TEXT,
       comment: 'Description'
     },
     state: {
@@ -68,6 +68,26 @@ module.exports = (sequelize, Sequelize) => {
         scope: {
           res_model: 'lp.activity'
         }
+      });
+    }
+
+    // Association with courses
+    if (models.course) {
+      Activity.hasMany(models.course, {
+        foreignKey: 'activity_id',
+        as: 'courses',
+        onUpdate: 'NO ACTION',
+        onDelete: 'SET NULL'
+      });
+    }
+
+    // Association with quick sessions
+    if (models.quickSession) {
+      Activity.hasMany(models.quickSession, {
+        foreignKey: 'activity_id',
+        as: 'quickSessions',
+        onUpdate: 'NO ACTION',
+        onDelete: 'SET NULL'
       });
     }
 
