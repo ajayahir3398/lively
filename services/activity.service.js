@@ -71,14 +71,17 @@ const getAllActivities = async (req, res) => {
         });
 
         // Add imageUrl to each activity
-        const activitiesWithImageUrl = result.rows.map(activity => {
+        const activities = result.rows.map(activity => {
             const activityData = activity.toJSON();
-            if (activity.attachments && activity.attachments.length > 0) {
-                const attachmentId = activity.attachments[0].id;
-                activityData.imageUrl = `${process.env.ODOO_SERVER_URL}content/${attachmentId}`;
-            } else {
-                activityData.imageUrl = null;
+            if (activityData.attachments && activityData.attachments.length > 0) {
+                activityData.attachments = activityData.attachments.map(attachment => {
+                    return {
+                        ...attachment,
+                        url: `${process.env.ODOO_SERVER_URL}/content/${attachment.id}`
+                    };
+                });
             }
+            activityData.attachments = activityData.attachments || [];
             return activityData;
         });
 
@@ -90,7 +93,7 @@ const getAllActivities = async (req, res) => {
         res.status(200).json({
             flag: true,
             message: "Activities retrieved successfully!",
-            data: activitiesWithImageUrl,
+            data: activities,
             pagination: {
                 currentPage: parseInt(page),
                 totalPages,
@@ -159,12 +162,15 @@ const getActivityById = async (req, res) => {
 
         // Add imageUrl to activity
         const activityData = activity.toJSON();
-        if (activity.attachments && activity.attachments.length > 0) {
-            const attachmentId = activity.attachments[0].id;
-            activityData.imageUrl = `${process.env.ODOO_SERVER_URL}content/${attachmentId}`;
-        } else {
-            activityData.imageUrl = null;
+        if (activityData.attachments && activityData.attachments.length > 0) {
+            activityData.attachments = activityData.attachments.map(attachment => {
+                return {
+                    ...attachment,
+                    url: `${process.env.ODOO_SERVER_URL}/content/${attachment.id}`
+                };
+            });
         }
+        activityData.attachments = activityData.attachments || [];
 
         res.status(200).json({
             flag: true,
@@ -249,14 +255,17 @@ const getCoursesByActivityId = async (req, res) => {
         }
 
         // Add imageUrl to each course
-        const coursesWithImageUrl = result.rows.map(course => {
+        const courses = result.rows.map(course => {
             const courseData = course.toJSON();
-            if (course.attachments && course.attachments.length > 0) {
-                const attachmentId = course.attachments[0].id;
-                courseData.imageUrl = `${process.env.ODOO_SERVER_URL}content/${attachmentId}`;
-            } else {
-                courseData.imageUrl = null;
+            if (courseData.attachments && courseData.attachments.length > 0) {
+                courseData.attachments = courseData.attachments.map(attachment => {
+                    return {
+                        ...attachment,
+                        url: `${process.env.ODOO_SERVER_URL}/content/${attachment.id}`
+                    };
+                });
             }
+            courseData.attachments = courseData.attachments || [];
             return courseData;
         });
 
@@ -268,7 +277,7 @@ const getCoursesByActivityId = async (req, res) => {
         res.status(200).json({
             flag: true,
             message: "Courses retrieved successfully!",
-            data: coursesWithImageUrl,
+            data: courses,
             pagination: {
                 currentPage: parseInt(page),
                 totalPages,
@@ -356,14 +365,17 @@ const getQuickSessionsByActivityId = async (req, res) => {
         }
 
         // Add imageUrl to each quick session
-        const quickSessionsWithImageUrl = result.rows.map(quickSession => {
+        const quickSessions = result.rows.map(quickSession => {
             const quickSessionData = quickSession.toJSON();
-            if (quickSession.attachments && quickSession.attachments.length > 0) {
-                const attachmentId = quickSession.attachments[0].id;
-                quickSessionData.imageUrl = `${process.env.ODOO_SERVER_URL}content/${attachmentId}`;
-            } else {
-                quickSessionData.imageUrl = null;
+            if (quickSessionData.attachments && quickSessionData.attachments.length > 0) {
+                quickSessionData.attachments = quickSessionData.attachments.map(attachment => {
+                    return {
+                        ...attachment,
+                        url: `${process.env.ODOO_SERVER_URL}/content/${attachment.id}`
+                    };
+                });
             }
+            quickSessionData.attachments = quickSessionData.attachments || [];
             return quickSessionData;
         });
 
@@ -375,7 +387,7 @@ const getQuickSessionsByActivityId = async (req, res) => {
         res.status(200).json({
             flag: true,
             message: "Quick sessions retrieved successfully!",
-            data: quickSessionsWithImageUrl,
+            data: quickSessions,
             pagination: {
                 currentPage: parseInt(page),
                 totalPages,
