@@ -339,10 +339,12 @@ const options = {
             comments: { type: 'string', description: 'Additional comments', example: 'This activity handles customer registration', nullable: true },
             create_date: { type: 'string', format: 'date-time', description: 'Created date', example: '2024-01-01T12:00:00.000Z' },
             write_date: { type: 'string', format: 'date-time', description: 'Last updated date', example: '2024-01-01T12:00:00.000Z' },
-            imageUrl: {
-              type: 'string',
-              description: 'URL to the activity image/attachment',
-              example: 'https://odoo-server.com/content/123',
+            attachments: {
+              type: 'array',
+              description: 'Array of attachments associated with the activity',
+              items: {
+                $ref: '#/components/schemas/ActivityAttachment'
+              },
               nullable: true
             }
           }
@@ -360,10 +362,20 @@ const options = {
             comments: { type: 'string', description: 'Additional comments', example: 'Beginner friendly course', nullable: true },
             create_date: { type: 'string', format: 'date-time', description: 'Created date', example: '2024-01-01T12:00:00.000Z' },
             write_date: { type: 'string', format: 'date-time', description: 'Last updated date', example: '2024-01-01T12:00:00.000Z' },
-            imageUrl: {
-              type: 'string',
-              description: 'URL to the course image/attachment',
-              example: 'https://odoo-server.com/content/123',
+            attachments: {
+              type: 'array',
+              description: 'Array of attachments associated with the course',
+              items: {
+                $ref: '#/components/schemas/CourseAttachment'
+              },
+              nullable: true
+            },
+            documents: {
+              type: 'array',
+              description: 'Array of documents associated with the course',
+              items: {
+                $ref: '#/components/schemas/CourseDocument'
+              },
               nullable: true
             }
           }
@@ -381,10 +393,20 @@ const options = {
             comments: { type: 'string', description: 'Additional comments', example: '15-minute demo session', nullable: true },
             create_date: { type: 'string', format: 'date-time', description: 'Created date', example: '2024-01-01T12:00:00.000Z' },
             write_date: { type: 'string', format: 'date-time', description: 'Last updated date', example: '2024-01-01T12:00:00.000Z' },
-            imageUrl: {
-              type: 'string',
-              description: 'URL to the quick session image/attachment',
-              example: 'https://odoo-server.com/content/123',
+            attachments: {
+              type: 'array',
+              description: 'Array of attachments associated with the quick session',
+              items: {
+                $ref: '#/components/schemas/QuickSessionAttachment'
+              },
+              nullable: true
+            },
+            documents: {
+              type: 'array',
+              description: 'Array of documents associated with the quick session',
+              items: {
+                $ref: '#/components/schemas/QuickSessionDocument'
+              },
               nullable: true
             }
           }
@@ -420,6 +442,64 @@ const options = {
             res_field: { type: 'string', description: 'Resource field', example: 'image', nullable: true }
           }
         },
+        ActivityAttachment: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', description: 'Attachment ID', example: 123 },
+            name: { type: 'string', description: 'Attachment name', example: 'activity_image.jpg' },
+            url: { type: 'string', description: 'Attachment URL', example: 'activity_image.jpg' },
+            mimetype: { type: 'string', description: 'MIME type', example: 'image/jpeg' },
+            file_size: { type: 'integer', description: 'File size in bytes', example: 512000 },
+            public: { type: 'boolean', description: 'Whether attachment is public', example: true },
+            attachment_url: { type: 'string', description: 'Full URL to access the attachment', example: 'https://odoo-server.com/content/123' }
+          }
+        },
+        CourseAttachment: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', description: 'Attachment ID', example: 123 },
+            name: { type: 'string', description: 'Attachment name', example: 'course_image.jpg' },
+            url: { type: 'string', description: 'Attachment URL', example: 'course_image.jpg' },
+            mimetype: { type: 'string', description: 'MIME type', example: 'image/jpeg' },
+            file_size: { type: 'integer', description: 'File size in bytes', example: 1024000 },
+            public: { type: 'boolean', description: 'Whether attachment is public', example: true },
+            attachment_url: { type: 'string', description: 'Full URL to access the attachment', example: 'https://odoo-server.com/content/123' }
+          }
+        },
+        QuickSessionAttachment: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', description: 'Attachment ID', example: 456 },
+            name: { type: 'string', description: 'Attachment name', example: 'session_image.jpg' },
+            url: { type: 'string', description: 'Attachment URL', example: 'session_image.jpg' },
+            mimetype: { type: 'string', description: 'MIME type', example: 'image/jpeg' },
+            file_size: { type: 'integer', description: 'File size in bytes', example: 512000 },
+            public: { type: 'boolean', description: 'Whether attachment is public', example: true },
+            attachment_url: { type: 'string', description: 'Full URL to access the attachment', example: 'https://odoo-server.com/content/456' }
+          }
+        },
+        CourseDocument: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', description: 'Document ID', example: 1 },
+            name: { type: 'string', description: 'Document name', example: 'Course Syllabus' },
+            file_name: { type: 'string', description: 'File name', example: 'syllabus.pdf' },
+            file_loc: { type: 'string', description: 'File location path', example: '/documents/course/syllabus.pdf' },
+            permission: { type: 'string', description: 'Document permission level', example: 'read' },
+            document_url: { type: 'string', description: 'Full URL to download the document', example: 'https://odoo-server.com/documents/course/syllabus.pdf' }
+          }
+        },
+        QuickSessionDocument: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', description: 'Document ID', example: 2 },
+            name: { type: 'string', description: 'Document name', example: 'Session Guide' },
+            file_name: { type: 'string', description: 'File name', example: 'guide.pdf' },
+            file_loc: { type: 'string', description: 'File location path', example: '/documents/session/guide.pdf' },
+            permission: { type: 'string', description: 'Document permission level', example: 'read' },
+            document_url: { type: 'string', description: 'Full URL to download the document', example: 'https://odoo-server.com/documents/session/guide.pdf' }
+          }
+        },
         GetAttachmentsByResourceResponse: {
           type: 'object',
           properties: {
@@ -441,6 +521,54 @@ const options = {
             message: { type: 'string', example: 'Attachment retrieved successfully!' },
             data: {
               $ref: '#/components/schemas/Attachment'
+            }
+          }
+        },
+        ActivityListResponse: {
+          type: 'object',
+          properties: {
+            flag: { type: 'boolean', example: true },
+            message: { type: 'string', example: 'Activities retrieved successfully!' },
+            data: {
+              type: 'array',
+              items: {
+                $ref: '#/components/schemas/Activity'
+              }
+            },
+            pagination: {
+              $ref: '#/components/schemas/Pagination'
+            }
+          }
+        },
+        CourseListResponse: {
+          type: 'object',
+          properties: {
+            flag: { type: 'boolean', example: true },
+            message: { type: 'string', example: 'Courses retrieved successfully!' },
+            data: {
+              type: 'array',
+              items: {
+                $ref: '#/components/schemas/Course'
+              }
+            },
+            pagination: {
+              $ref: '#/components/schemas/Pagination'
+            }
+          }
+        },
+        QuickSessionListResponse: {
+          type: 'object',
+          properties: {
+            flag: { type: 'boolean', example: true },
+            message: { type: 'string', example: 'Quick sessions retrieved successfully!' },
+            data: {
+              type: 'array',
+              items: {
+                $ref: '#/components/schemas/QuickSession'
+              }
+            },
+            pagination: {
+              $ref: '#/components/schemas/Pagination'
             }
           }
         }

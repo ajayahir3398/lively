@@ -61,7 +61,7 @@ const getAllActivities = async (req, res) => {
                 {
                     model: IrAttachment,
                     as: 'attachments',
-                    attributes: ['id'],
+                    attributes: ['id', 'name', 'url', 'mimetype', 'file_size', 'public'],
                     where: {
                         res_model: 'lp.activity'
                     },
@@ -77,7 +77,7 @@ const getAllActivities = async (req, res) => {
                 activityData.attachments = activityData.attachments.map(attachment => {
                     return {
                         ...attachment,
-                        url: `${process.env.ODOO_SERVER_URL}/content/${attachment.id}`
+                        attachment_url: `${process.env.ODOO_SERVER_URL}/content/${attachment.id}`
                     };
                 });
             }
@@ -144,7 +144,7 @@ const getActivityById = async (req, res) => {
                 {
                     model: IrAttachment,
                     as: 'attachments',
-                    attributes: ['id'],
+                    attributes: ['id', 'name', 'url', 'mimetype', 'file_size', 'public'],
                     where: {
                         res_model: 'lp.activity'
                     },
@@ -166,7 +166,7 @@ const getActivityById = async (req, res) => {
             activityData.attachments = activityData.attachments.map(attachment => {
                 return {
                     ...attachment,
-                    url: `${process.env.ODOO_SERVER_URL}/content/${attachment.id}`
+                    attachment_url: `${process.env.ODOO_SERVER_URL}/content/${attachment.id}`
                 };
             });
         }
@@ -238,10 +238,22 @@ const getCoursesByActivityId = async (req, res) => {
                 {
                     model: IrAttachment,
                     as: 'attachments',
-                    attributes: ['id'],
+                    attributes: ['id', 'name', 'url', 'mimetype', 'file_size', 'public'],
                     where: {
                         res_model: 'lp.course'
                     },
+                    required: false
+                },
+                {
+                    model: db.document,
+                    as: 'documents',
+                    attributes: [
+                        'id',
+                        'name',
+                        'file_name',
+                        'file_loc',
+                        'permission'
+                    ],
                     required: false
                 }
             ]
@@ -254,18 +266,29 @@ const getCoursesByActivityId = async (req, res) => {
             });
         }
 
-        // Add imageUrl to each course
+        // Add imageUrl to each course and process documents
         const courses = result.rows.map(course => {
             const courseData = course.toJSON();
             if (courseData.attachments && courseData.attachments.length > 0) {
                 courseData.attachments = courseData.attachments.map(attachment => {
                     return {
                         ...attachment,
-                        url: `${process.env.ODOO_SERVER_URL}/content/${attachment.id}`
+                        attachment_url: `${process.env.ODOO_SERVER_URL}/content/${attachment.id}`
                     };
                 });
             }
             courseData.attachments = courseData.attachments || [];
+            
+            if(courseData.documents && courseData.documents.length > 0){
+                courseData.documents = courseData.documents.map(document => {
+                    return {
+                        ...document,
+                        document_url: `${process.env.ODOO_SERVER_URL}${document.file_loc}`
+                    };
+                });
+            }
+            courseData.documents = courseData.documents || [];
+            
             return courseData;
         });
 
@@ -348,10 +371,22 @@ const getQuickSessionsByActivityId = async (req, res) => {
                 {
                     model: IrAttachment,
                     as: 'attachments',
-                    attributes: ['id'],
+                    attributes: ['id', 'name', 'url', 'mimetype', 'file_size', 'public'],
                     where: {
                         res_model: 'lp.quick_sess'
                     },
+                    required: false
+                },
+                {
+                    model: db.document,
+                    as: 'documents',
+                    attributes: [
+                        'id',
+                        'name',
+                        'file_name',
+                        'file_loc',
+                        'permission'
+                    ],
                     required: false
                 }
             ]
@@ -364,18 +399,29 @@ const getQuickSessionsByActivityId = async (req, res) => {
             });
         }
 
-        // Add imageUrl to each quick session
+        // Add imageUrl to each quick session and process documents
         const quickSessions = result.rows.map(quickSession => {
             const quickSessionData = quickSession.toJSON();
             if (quickSessionData.attachments && quickSessionData.attachments.length > 0) {
                 quickSessionData.attachments = quickSessionData.attachments.map(attachment => {
                     return {
                         ...attachment,
-                        url: `${process.env.ODOO_SERVER_URL}/content/${attachment.id}`
+                        attachment_url: `${process.env.ODOO_SERVER_URL}/content/${attachment.id}`
                     };
                 });
             }
             quickSessionData.attachments = quickSessionData.attachments || [];
+            
+            if(quickSessionData.documents && quickSessionData.documents.length > 0){
+                quickSessionData.documents = quickSessionData.documents.map(document => {
+                    return {
+                        ...document,
+                        document_url: `${process.env.ODOO_SERVER_URL}${document.file_loc}`
+                    };
+                });
+            }
+            quickSessionData.documents = quickSessionData.documents || [];
+            
             return quickSessionData;
         });
 

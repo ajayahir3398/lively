@@ -36,14 +36,15 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 - **User Details**: Profile completion and status tracking
 - **Protected**: Example protected routes
 - **System**: Health checks and system endpoints
-- **Activities**: Activity management with automatic image URL generation
+- **Activities**: Activity management with automatic image URL generation and document integration
 
-### 🖼️ **Image URL Generation**
-- **Automatic Attachment Processing**: Activities automatically include image URLs from attachments
+### 🖼️ **Image URL Generation & Document Management**
+- **Automatic Attachment Processing**: Activities, courses, and quick sessions automatically include image URLs from attachments
 - **Smart URL Construction**: URLs generated using `${ODOO_SERVER_URL}content/${attachment_id}` format
-- **Null Handling**: `imageUrl` field is `null` when no attachments exist
-- **Database Integration**: Seamlessly integrates with `ir_attachment` table using `res_id` and `res_model`
-- **Performance Optimized**: Only fetches attachment IDs, not full attachment data
+- **Document Integration**: Courses and quick sessions include associated documents with download URLs
+- **Document URL Construction**: Document URLs generated using `${ODOO_SERVER_URL}${document.file_loc}` format
+- **Database Integration**: Seamlessly integrates with `ir_attachment` and `lp_document` tables using foreign key relationships
+- **Performance Optimized**: Only fetches necessary attachment and document metadata, not full file data
 
 ## API Endpoints Documentation
 
@@ -135,35 +136,35 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
   - `name` (optional): Filter by activity name (partial match)
   - `sortBy` (optional): Sort field (id, name, code, state, create_date, write_date)
   - `sortOrder` (optional): Sort order (ASC, DESC)
-- **Response**: List of activities with pagination info and imageUrl field
+- **Response**: List of activities with pagination info and attachments
 - **Features**: 
   - Automatic image URL generation from attachments
   - URL format: `${ODOO_SERVER_URL}content/${attachment_id}`
-  - `imageUrl` is `null` if no attachments exist
+  - `attachments` array with attachment details and URLs
 
 #### 2. Get Activity by ID
 - **Endpoint**: `GET /api/activity/{id}`
-- **Description**: Retrieves a specific activity by its ID with image URL
+- **Description**: Retrieves a specific activity by its ID with attachments
 - **Authentication**: Required (Bearer token)
 - **Path Parameters**: `id` - Activity ID
-- **Response**: Activity details with imageUrl field
+- **Response**: Activity details with attachments
 
 #### 3. Get Activity by Code
 - **Endpoint**: `GET /api/activity/code/{code}`
-- **Description**: Retrieves a specific activity by its code with image URL
+- **Description**: Retrieves a specific activity by its code with attachments
 - **Authentication**: Required (Bearer token)
 - **Path Parameters**: `code` - Activity code
-- **Response**: Activity details with imageUrl field
+- **Response**: Activity details with attachments
 
 #### 4. Get Activities by State
 - **Endpoint**: `GET /api/activity/state/{state}`
-- **Description**: Retrieves all activities with a specific state with image URLs
+- **Description**: Retrieves all activities with a specific state with attachments
 - **Authentication**: Required (Bearer token)
 - **Path Parameters**: `state` - Activity state
 - **Query Parameters**: 
   - `page` (optional): Page number for pagination
   - `limit` (optional): Records per page
-- **Response**: List of activities with pagination info and imageUrl field
+- **Response**: List of activities with pagination info and attachments
 
 #### 5. Get Courses by Activity ID
 - **Endpoint**: `GET /api/activity/{id}/courses`
@@ -173,14 +174,16 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 - **Query Parameters**: 
   - `page` (optional): Page number for pagination (default: 1)
   - `limit` (optional): Records per page (default: 10)
-- **Response**: List of courses with pagination info and imageUrl field
+- **Response**: List of courses with pagination info, attachments, and documents
 - **Features**: 
   - Validates activity existence before fetching courses
   - Uses `activity_id` field to find related courses
   - Returns 404 if no courses found for the activity
   - Automatic image URL generation from attachments
   - URL format: `${ODOO_SERVER_URL}content/${attachment_id}`
-  - `imageUrl` is `null` if no attachments exist
+  - `attachments` array with attachment details and URLs
+  - `documents` array with document information and download URLs
+  - Document URL format: `${ODOO_SERVER_URL}${document.file_loc}`
 
 #### 6. Get Quick Sessions by Activity ID
 - **Endpoint**: `GET /api/activity/{id}/quick-sessions`
@@ -190,14 +193,16 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
 - **Query Parameters**: 
   - `page` (optional): Page number for pagination (default: 1)
   - `limit` (optional): Records per page (default: 10)
-- **Response**: List of quick sessions with pagination info and imageUrl field
+- **Response**: List of quick sessions with pagination info, attachments, and documents
 - **Features**: 
   - Validates activity existence before fetching quick sessions
   - Uses `activity_id` field to find related quick sessions
   - Returns 404 if no quick sessions found for the activity
   - Automatic image URL generation from attachments
   - URL format: `${ODOO_SERVER_URL}content/${attachment_id}`
-  - `imageUrl` is `null` if no attachments exist
+  - `attachments` array with attachment details and URLs
+  - `documents` array with document information and download URLs
+  - Document URL format: `${ODOO_SERVER_URL}${document.file_loc}`
 
 ### User Details Endpoints
 
@@ -404,7 +409,17 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
   "comments": "This activity handles customer registration",
   "create_date": "2024-01-01T12:00:00.000Z",
   "write_date": "2024-01-01T12:00:00.000Z",
-  "imageUrl": "https://odoo-server.com/content/123"
+  "attachments": [
+    {
+      "id": 123,
+      "name": "activity_image.jpg",
+      "url": "activity_image.jpg",
+      "mimetype": "image/jpeg",
+      "file_size": 512000,
+      "public": true,
+      "attachment_url": "https://odoo-server.com/content/123"
+    }
+  ]
 }
 ```
 
@@ -423,7 +438,17 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
       "comments": "This activity handles customer registration",
       "create_date": "2024-01-01T12:00:00.000Z",
       "write_date": "2024-01-01T12:00:00.000Z",
-      "imageUrl": "https://odoo-server.com/content/123"
+      "attachments": [
+        {
+          "id": 123,
+          "name": "activity_image.jpg",
+          "url": "activity_image.jpg",
+          "mimetype": "image/jpeg",
+          "file_size": 512000,
+          "public": true,
+          "attachment_url": "https://odoo-server.com/content/123"
+        }
+      ]
     }
   ],
   "pagination": {
@@ -450,7 +475,27 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
   "comments": "Beginner friendly course",
   "create_date": "2024-01-01T12:00:00.000Z",
   "write_date": "2024-01-01T12:00:00.000Z",
-  "imageUrl": "https://odoo-server.com/content/123"
+  "attachments": [
+    {
+      "id": 123,
+      "name": "course_image.jpg",
+      "url": "course_image.jpg",
+      "mimetype": "image/jpeg",
+      "file_size": 1024000,
+      "public": true,
+      "attachment_url": "https://odoo-server.com/content/123"
+    }
+  ],
+  "documents": [
+    {
+      "id": 1,
+      "name": "Course Syllabus",
+      "file_name": "syllabus.pdf",
+      "file_loc": "/documents/course/syllabus.pdf",
+      "permission": "read",
+      "document_url": "https://odoo-server.com/documents/course/syllabus.pdf"
+    }
+  ]
 }
 ```
 
@@ -467,7 +512,154 @@ The API documentation is automatically generated using Swagger/OpenAPI 3.0 speci
   "comments": "15-minute demo session",
   "create_date": "2024-01-01T12:00:00.000Z",
   "write_date": "2024-01-01T12:00:00.000Z",
-  "imageUrl": "https://odoo-server.com/content/456"
+  "attachments": [
+    {
+      "id": 456,
+      "name": "session_image.jpg",
+      "url": "session_image.jpg",
+      "mimetype": "image/jpeg",
+      "file_size": 512000,
+      "public": true,
+      "attachment_url": "https://odoo-server.com/content/456"
+    }
+  ],
+  "documents": [
+    {
+      "id": 2,
+      "name": "Session Guide",
+      "file_name": "guide.pdf",
+      "file_loc": "/documents/session/guide.pdf",
+      "permission": "read",
+      "document_url": "https://odoo-server.com/documents/session/guide.pdf"
+    }
+  ]
+}
+```
+
+#### CourseListResponse
+```json
+{
+  "flag": true,
+  "message": "Courses retrieved successfully!",
+  "data": [
+    {
+      "id": 1,
+      "course_ref_id": 100,
+      "activity_id": 1,
+      "name": "Introduction to Programming",
+      "code": "PROG101",
+      "description": "Basic programming concepts",
+      "state": "active",
+      "comments": "Beginner friendly course",
+      "create_date": "2024-01-01T12:00:00.000Z",
+      "write_date": "2024-01-01T12:00:00.000Z",
+      "attachments": [
+        {
+          "id": 123,
+          "name": "course_image.jpg",
+          "url": "course_image.jpg",
+          "mimetype": "image/jpeg",
+          "file_size": 1024000,
+          "public": true,
+          "attachment_url": "https://odoo-server.com/content/123"
+        }
+      ],
+      "documents": [
+        {
+          "id": 1,
+          "name": "Course Syllabus",
+          "file_name": "syllabus.pdf",
+          "file_loc": "/documents/course/syllabus.pdf",
+          "permission": "read",
+          "document_url": "https://odoo-server.com/documents/course/syllabus.pdf"
+        }
+      ]
+    }
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 5,
+    "totalRecords": 47,
+    "limit": 10,
+    "hasNextPage": true,
+    "hasPrevPage": false
+  }
+}
+```
+
+#### QuickSessionListResponse
+```json
+{
+  "flag": true,
+  "message": "Quick sessions retrieved successfully!",
+  "data": [
+    {
+      "id": 1,
+      "sess_ref_id": 200,
+      "activity_id": 1,
+      "name": "Quick Demo Session",
+      "code": "DEMO001",
+      "description": "Quick demonstration",
+      "state": "active",
+      "comments": "15-minute demo session",
+      "create_date": "2024-01-01T12:00:00.000Z",
+      "write_date": "2024-01-01T12:00:00.000Z",
+      "attachments": [
+        {
+          "id": 456,
+          "name": "session_image.jpg",
+          "url": "session_image.jpg",
+          "mimetype": "image/jpeg",
+          "file_size": 512000,
+          "public": true,
+          "attachment_url": "https://odoo-server.com/content/456"
+        }
+      ],
+      "documents": [
+        {
+          "id": 2,
+          "name": "Session Guide",
+          "file_name": "guide.pdf",
+          "file_loc": "/documents/session/guide.pdf",
+          "permission": "read",
+          "document_url": "https://odoo-server.com/documents/session/guide.pdf"
+        }
+      ]
+    }
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 3,
+    "totalRecords": 25,
+    "limit": 10,
+    "hasNextPage": true,
+    "hasPrevPage": false
+  }
+}
+```
+
+#### Attachment
+```json
+{
+  "id": 123,
+  "name": "course_image.jpg",
+  "url": "course_image.jpg",
+  "mimetype": "image/jpeg",
+  "file_size": 1024000,
+  "public": true,
+  "attachment_url": "https://odoo-server.com/content/123"
+}
+```
+
+#### Document
+```json
+{
+  "id": 1,
+  "name": "Course Syllabus",
+  "file_name": "syllabus.pdf",
+  "file_loc": "/documents/course/syllabus.pdf",
+  "permission": "read",
+  "document_url": "https://odoo-server.com/documents/course/syllabus.pdf"
 }
 ```
 
