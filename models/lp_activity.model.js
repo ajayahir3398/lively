@@ -91,6 +91,16 @@ module.exports = (sequelize, Sequelize) => {
       });
     }
 
+    // Association with documents
+    if (models.document) {
+      Activity.hasMany(models.document, {
+        foreignKey: 'activity_id',
+        as: 'documents',
+        onUpdate: 'NO ACTION',
+        onDelete: 'SET NULL'
+      });
+    }
+
     // Foreign key associations for create_uid and write_uid
     // These reference res_users table which may not be in this project yet
     // Uncomment when res_users model is available:

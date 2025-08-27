@@ -104,6 +104,16 @@ module.exports = (sequelize, Sequelize) => {
     //   });
     // }
 
+    // Association with documents
+    if (models.document) {
+      QuickSession.hasMany(models.document, {
+        foreignKey: 'quick_sess_id',
+        as: 'documents',
+        onUpdate: 'NO ACTION',
+        onDelete: 'SET NULL'
+      });
+    }
+
     // Foreign key associations for create_uid and write_uid referencing res_users
     // Uncomment when res_users model is available:
     // if (models.res_users) {
