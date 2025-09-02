@@ -2,8 +2,8 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
 // Token configurations
-const ACCESS_TOKEN_EXPIRY = '15m'; // 15 minutes as per documentation
-const REFRESH_TOKEN_EXPIRY = '7d'; // 7 days as per documentation
+const ACCESS_TOKEN_EXPIRY = '60d'; // 60 days as per documentation
+const REFRESH_TOKEN_EXPIRY = '60d'; // 60 days as per documentation 
 
 /**
  * Generate access token (short-lived)
